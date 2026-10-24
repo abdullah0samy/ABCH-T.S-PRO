@@ -1,0 +1,135 @@
+name: CI
+
+# Gates every push and pull request. Each job fails the build on its own, so a
+# type error cannot be merged because someone did not run tsc locally.
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+
+# A new push to the same branch cancels the previous run.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '20'
+
+jobs:
+  typecheck:
+    name: Type check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: npm ci --ignore-scripts
+
+      - name: Generate Prisma client
+        working-directory: backend
+        run: npx prisma generate
+
+      - name: Type check backend
+        working-directory: backend
+        run: npx tsc --noEmit
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci --ignore-scripts
+
+      - name: Type check frontend
+        working-directory: frontend
+        run: npx tsc --noEmit
+
+  test:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: npm ci --ignore-scripts
+
+      - name: Generate Prisma client
+        working-directory: backend
+        run: npx prisma generate
+
+      # Secrets are only needed so the modules under test can import; these are
+      # throwaway values, never anything real.
+      - name: Run unit tests
+        run: npx vitest run tests/unit --pool=threads
+        env:
+          JWT_ACCESS_SECRET: ci-access-secret-not-a-real-key
+          JWT_REFRESH_SECRET: ci-refresh-secret-not-a-real-key
+          CSRF_SECRET: ci-csrf-secret-not-a-real-key
+          FRONTEND_URL: http://localhost:8080
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+
+      - name: Install backend dependencies
+        working-directory: backend
+        run: npm ci --ignore-scripts
+
+      - name: Generate Prisma client
+        working-directory: backend
+        run: npx prisma generate
+
+      - name: Build backend
+        working-directory: backend
+        run: npm run build
+
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci --ignore-scripts
+
+      - name: Build frontend
+        working-directory: frontend
+        run: npm run build
+
+  secrets-scan:
+    name: No committed secrets
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # A hospital deployment leaking a signing key is the failure mode this
+      # repo has already had once, so it is checked on every push.
+      - name: Fail if a .env file is committed
+        run: |
+          if git ls-files | grep -E '(^|/)\.env$|(^|/)\.env\.(local|production)$'; then
+            echo "::error::A .env file is committed. Remove it and rotate the secrets."
+            exit 1
+          fi
+          echo "No .env files tracked."
+
+      # Tests are excluded on purpose: they set throwaway values so the modules
+      # under test can import at all, and those are not credentials.
+      - name: Fail on obvious hardcoded secrets
+        run: |
+          if git grep -nE "(JWT_(ACCESS|REFRESH)_SECRET|CSRF_SECRET|POSTGRES_PASSWORD)[[:space:]]*[:=][[:space:]]*['\"][^'\"$]{8,}" -- \
+               ':!*.example' ':!.github/workflows/*' ':!*.md' ':!tests/**'; then
+            echo "::error::Hardcoded secret found. Move it to an environment variable."
+            exit 1
+          fi
+          echo "No hardcoded secrets found."

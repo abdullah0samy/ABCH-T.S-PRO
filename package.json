@@ -1,0 +1,40 @@
+{
+  "name": "abch-ticketing",
+  "private": true,
+  "version": "2.0.0",
+  "type": "module",
+  "scripts": {
+    "dev:backend": "nest start --watch --project backend",
+    "dev:frontend": "vite --config frontend/vite.config.ts",
+    "start:prod": "node backend/dist/main",
+    "build:backend": "cd backend && nest build",
+    "build:frontend": "cd frontend && vite build --outDir ../dist",
+    "lint": "tsc --noEmit",
+    "lint:backend": "cd backend && npx tsc --noEmit",
+    "lint:frontend": "cd frontend && npx tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "postinstall": "cd backend && prisma generate"
+  },
+  "devDependencies": {
+    "@nestjs/jwt": "^11.0.2",
+    "@nestjs/testing": "^11.1.29",
+    "@nestjs/throttler": "^6.5.0",
+    "@testing-library/dom": "^10.4.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/node": "^22.14.0",
+    "@types/set-cookie-parser": "^2.4.10",
+    "@types/statuses": "^2.0.6",
+    "@types/supertest": "^7.2.1",
+    "@vitest/coverage-v8": "^4.1.8",
+    "cookie-parser": "^1.4.7",
+    "jsdom": "^29.1.1",
+    "msw": "^2.14.6",
+    "supertest": "^7.2.2",
+    "tsx": "^4.21.0",
+    "typescript": "~5.8.2",
+    "vitest": "^4.1.4"
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "_comment": "AI Studio frame-permission manifest. requestFramePermissions grants camera/microphone access to the dev environment so voice-note recording works in the local preview. This file is intentionally committed — remove it if deploying outside AI Studio.",
+  "name": "ABCH Ticketing CRM",
+  "description": "Enterprise IT Service Management (ITSM) & Helpdesk Platform for ABCH.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
