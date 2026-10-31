@@ -103,7 +103,7 @@ export default function BuildingsPage() {
               <div className="w-12 h-12 bg-primary-blue/10 rounded-xl flex items-center justify-center text-primary-blue">
                 <Building2 size={24} />
               </div>
-              <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-all">
+              <div className="flex gap-2 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 focus-within:opacity-100 transition-all">
                 <button
                   onClick={() => {
                     setEditingBuilding(building);

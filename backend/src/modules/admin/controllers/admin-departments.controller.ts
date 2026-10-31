@@ -20,7 +20,11 @@ export class AdminDepartmentsController {
   async findAll() {
     return this.prisma.department.findMany({
       where: { deletedAt: null },
-      include: { defaultPermissions: true, _count: { select: { users: true } } },
+      include: {
+        defaultPermissions: true,
+        allowedTransferTargets: { where: { isActive: true } },
+        _count: { select: { users: true } },
+      },
       orderBy: { nameEn: 'asc' },
     });
   }
@@ -37,6 +41,7 @@ export class AdminDepartmentsController {
       isActive?: boolean;
       slaHours?: number | string;
       defaultPermissions?: Record<string, boolean>;
+      allowedTransferTargetIds?: number[];
     },
     @CurrentUser('id') userId: number,
   ) {
@@ -62,6 +67,19 @@ export class AdminDepartmentsController {
       include: { defaultPermissions: true },
     });
 
+    if (Array.isArray(body.allowedTransferTargetIds) && body.allowedTransferTargetIds.length > 0) {
+      const targetIds = Array.from(new Set(body.allowedTransferTargetIds.map(Number).filter((tid) => tid && tid !== department.id)));
+      if (targetIds.length > 0) {
+        await this.prisma.deptTransferAllowlist.createMany({
+          data: targetIds.map((targetDeptId) => ({
+            sourceDeptId: department.id,
+            targetDeptId,
+            isActive: true,
+          })),
+        });
+      }
+    }
+
     await this.prisma.auditLog.create({
       data: {
         userId,
@@ -72,7 +90,10 @@ export class AdminDepartmentsController {
       },
     });
 
-    return department;
+    return this.prisma.department.findUnique({
+      where: { id: department.id },
+      include: { defaultPermissions: true, allowedTransferTargets: { where: { isActive: true } }, _count: { select: { users: true } } },
+    });
   }
 
   @Put(':id')
@@ -119,6 +140,20 @@ export class AdminDepartmentsController {
       include: { defaultPermissions: true },
     });
 
+    if (Array.isArray(body.allowedTransferTargetIds)) {
+      await this.prisma.deptTransferAllowlist.deleteMany({ where: { sourceDeptId: department.id } });
+      const targetIds: number[] = Array.from(new Set<number>(body.allowedTransferTargetIds.map(Number).filter((tid: number) => tid && tid !== department.id)));
+      if (targetIds.length > 0) {
+        await this.prisma.deptTransferAllowlist.createMany({
+          data: targetIds.map((targetDeptId: number) => ({
+            sourceDeptId: department.id,
+            targetDeptId,
+            isActive: true,
+          })),
+        });
+      }
+    }
+
     await this.prisma.auditLog.create({
       data: {
         userId,
@@ -130,7 +165,10 @@ export class AdminDepartmentsController {
       },
     });
 
-    return department;
+    return this.prisma.department.findUnique({
+      where: { id: department.id },
+      include: { defaultPermissions: true, allowedTransferTargets: { where: { isActive: true } }, _count: { select: { users: true } } },
+    });
   }
 
   @Put(':id/permissions')

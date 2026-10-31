@@ -58,9 +58,10 @@ export const AnalyticsPage: React.FC = () => {
   const t = translations[language];
   const { addNotification } = useNotifications();
   const [showAllAgents, setShowAllAgents] = useState(false);
+  const [days, setDays] = useState<number | undefined>(30);
   const { data, isLoading: loading, error: queryError, refetch } = useQuery({
-    queryKey: ['analytics', 'dashboard-summary'],
-    queryFn: () => apiFetch('/api/analytics/dashboard-summary')
+    queryKey: ['analytics', 'dashboard-summary', days],
+    queryFn: () => apiFetch(`/api/analytics/dashboard-summary${days ? `?days=${days}` : ''}`)
   });
 
   const stats = data?.stats || null;
@@ -93,13 +94,18 @@ export const AnalyticsPage: React.FC = () => {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <button
-            onClick={() => refetch()}
-            className="flex items-center gap-2 px-4 py-2 bg-[var(--bg-surface)] border border-[var(--border-main)] rounded-xl text-sm font-medium hover:bg-[var(--bg-main)] transition-colors"
-          >
-            <Calendar size={18} />
-            {language === 'ar' ? 'آخر 30 يوم' : 'Last 30 Days'}
-          </button>
+          <div className="flex items-center gap-2 px-3 py-2 bg-[var(--bg-surface)] border border-[var(--border-main)] rounded-xl text-sm font-medium">
+            <Calendar size={18} className="text-[var(--text-muted)]" />
+            <select
+              value={days ?? 'all'}
+              onChange={(e) => setDays(e.target.value === 'all' ? undefined : Number(e.target.value))}
+              className="bg-transparent outline-none text-[var(--text-main)] font-medium cursor-pointer"
+            >
+              <option value={7}>{t.last7Days}</option>
+              <option value={30}>{t.last30Days}</option>
+              <option value="all">{t.allTime}</option>
+            </select>
+          </div>
           <button 
             onClick={async () => {
               try {
@@ -132,7 +138,9 @@ export const AnalyticsPage: React.FC = () => {
             <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-2xl text-blue-600">
               <TrendingUp size={24} />
             </div>
-            <span className="text-xs font-bold text-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-1 rounded-lg">+12%</span>
+            <span className="text-xs font-bold text-emerald-500 bg-emerald-50 dark:bg-emerald-900/20 px-2 py-1 rounded-lg">
+              {stats?.total ? `${Math.round(((stats.resolved || 0) / stats.total) * 100)}%` : '0%'}
+            </span>
           </div>
           <div className="text-2xl font-bold text-[var(--text-main)]">{stats?.total || 0}</div>
           <div className="text-sm text-[var(--text-secondary)]">{t.totalTickets}</div>

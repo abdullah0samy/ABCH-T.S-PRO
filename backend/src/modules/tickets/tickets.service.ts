@@ -420,12 +420,15 @@ export class TicketsService {
     const ticket = await this.prisma.ticket.findUnique({ where: { id: ticketId } });
     if (!ticket) throw new NotFoundException({ message: 'Ticket not found' });
 
-    if ((ticket.status === 'closed' || ticket.status === 'resolved') && userRole !== 'super_admin') {
+    const isCreatorReopening = ticket.status === 'resolved' && status === 'in_progress' && Number(ticket.createdById) === Number(userId);
+    if ((ticket.status === 'closed' || (ticket.status === 'resolved' && status !== 'in_progress')) && userRole !== 'super_admin') {
       throw new ForbiddenException({ message: 'Ticket is locked. Only Super Admin can modify closed or resolved tickets via this endpoint.' });
     }
 
-    const hasPermission = await this.checkTicketPermission(userId, userRole, userDeptId ? Number(userDeptId) : null, ticket.departmentId, 'canChangeStatus');
-    if (!hasPermission) throw new ForbiddenException({ message: 'You do not have permission to update ticket status' });
+    if (!isCreatorReopening) {
+      const hasPermission = await this.checkTicketPermission(userId, userRole, userDeptId ? Number(userDeptId) : null, ticket.departmentId, 'canChangeStatus');
+      if (!hasPermission) throw new ForbiddenException({ message: 'You do not have permission to update ticket status' });
+    }
 
     const oldStatus = ticket.status;
     const allowed = ALLOWED_TRANSITIONS[oldStatus] || [];
@@ -606,13 +609,21 @@ export class TicketsService {
 
     const targetDept = await this.prisma.department.findUnique({ where: { id: parseInt(targetDeptId) } });
     if (!targetDept) throw new NotFoundException({ message: 'Target department not found' });
+    if (!targetDept.isActive || targetDept.deletedAt || (targetDept.deptType !== 'RECEIVER_ONLY' && targetDept.deptType !== 'BOTH')) {
+      throw new BadRequestException({ message: 'Target department cannot receive tickets' });
+    }
 
     if (userRole !== 'super_admin') {
-      const allowed = await this.prisma.deptTransferAllowlist.findFirst({
-        where: { sourceDeptId: ticket.departmentId, targetDeptId: parseInt(targetDeptId), isActive: true },
+      const configuredRulesCount = await this.prisma.deptTransferAllowlist.count({
+        where: { sourceDeptId: ticket.departmentId, isActive: true },
       });
-      if (!allowed) {
-        throw new ForbiddenException({ message: 'This department is not on the allowed transfer list for your department', code: 'TRANSFER_NOT_ALLOWED' });
+      if (configuredRulesCount > 0) {
+        const allowed = await this.prisma.deptTransferAllowlist.findFirst({
+          where: { sourceDeptId: ticket.departmentId, targetDeptId: parseInt(targetDeptId), isActive: true },
+        });
+        if (!allowed) {
+          throw new ForbiddenException({ message: 'This department is not on the allowed transfer list for your department', code: 'TRANSFER_NOT_ALLOWED' });
+        }
       }
     }
 

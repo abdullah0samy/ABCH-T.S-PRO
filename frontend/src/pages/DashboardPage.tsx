@@ -97,7 +97,8 @@ interface AssetSummary {
 
 export default function DashboardPage() {
   const queryClient = useQueryClient();
-  const { data: summaryData, isLoading: isLoadingSummary, error: summaryError, refetch: refetchSummary } = useDashboardSummary();
+  const [days, setDays] = useState<number | undefined>(30);
+  const { data: summaryData, isLoading: isLoadingSummary, error: summaryError, refetch: refetchSummary } = useDashboardSummary(days);
   const { data: ahtData, isLoading: isLoadingAht, error: ahtError, refetch: refetchAht } = useDashboardAht();
 
   const [activeTab, setActiveTab] = useState<'overview' | 'exports'>('overview');
@@ -229,11 +230,11 @@ export default function DashboardPage() {
           {/* KPI Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
             {[
-              { label: t.totalTickets, value: stats?.total, icon: Ticket, color: 'text-primary-blue', bg: 'bg-primary-blue/10' },
-              { label: t.pending, value: stats?.pending, icon: Clock, color: 'text-warning-amber', bg: 'bg-warning-amber/10' },
-              { label: t.resolved, value: stats?.resolved, icon: CheckCircle2, color: 'text-success-green', bg: 'bg-success-green/10' },
-              { label: t.overdue, value: stats?.overdue, icon: AlertCircle, color: 'text-danger-red', bg: 'bg-danger-red/10' },
-              { label: t.avgResolution, value: `${stats?.avgResolutionTimeHours}h`, icon: TrendingUp, color: 'text-purple-500', bg: 'bg-purple-500/10' },
+              { label: t.totalTickets, value: stats?.total ?? 0, badge: '100%', icon: Ticket, color: 'text-primary-blue', bg: 'bg-primary-blue/10' },
+              { label: t.pending, value: stats?.pending ?? 0, badge: `${stats?.total ? Math.round((stats.pending / stats.total) * 100) : 0}%`, icon: Clock, color: 'text-warning-amber', bg: 'bg-warning-amber/10' },
+              { label: t.resolved, value: stats?.resolved ?? 0, badge: `${stats?.total ? Math.round((stats.resolved / stats.total) * 100) : 0}%`, icon: CheckCircle2, color: 'text-success-green', bg: 'bg-success-green/10' },
+              { label: t.overdue, value: stats?.overdue ?? 0, badge: `${stats?.total ? Math.round((stats.overdue / stats.total) * 100) : 0}%`, icon: AlertCircle, color: 'text-danger-red', bg: 'bg-danger-red/10' },
+              { label: t.avgResolution, value: `${stats?.avgResolutionTimeHours ?? 0}h`, badge: `${stats?.total ? Math.max(0, 100 - Math.round(((stats.overdue || 0) / stats.total) * 100)) : 100}% SLA`, icon: TrendingUp, color: 'text-purple-500', bg: 'bg-purple-500/10' },
             ].map((kpi, i) => (
               <motion.div 
                 key={i}
@@ -248,7 +249,7 @@ export default function DashboardPage() {
                   </div>
                   <div className="flex items-center gap-1 text-success-green text-xs font-bold">
                     <ArrowUpRight size={14} />
-                    <span>12%</span>
+                    <span>{kpi.badge}</span>
                   </div>
                 </div>
                 <p className="text-sm font-bold text-[var(--text-muted)] uppercase tracking-widest mb-1">{kpi.label}</p>
@@ -308,9 +309,14 @@ export default function DashboardPage() {
                   <Activity size={18} className="text-primary-blue" />
                   {t.statusDistribution}
                 </h3>
-                <select className="text-xs font-bold text-[var(--text-muted)] bg-transparent outline-none">
-                  <option>Last 7 Days</option>
-                  <option>{t.last30Days}</option>
+                <select
+                  value={days ?? 'all'}
+                  onChange={(e) => setDays(e.target.value === 'all' ? undefined : Number(e.target.value))}
+                  className="text-xs font-bold text-[var(--text-muted)] bg-transparent outline-none cursor-pointer"
+                >
+                  <option value={7}>{t.last7Days}</option>
+                  <option value={30}>{t.last30Days}</option>
+                  <option value="all">{t.allTime}</option>
                 </select>
               </div>
               <div className="h-[300px]">
@@ -478,7 +484,7 @@ export default function DashboardPage() {
                     const barPercent = (item.avgHours / maxHours) * 100;
                     const barColor = item.priority === 'high' || item.priority === 'critical' 
                       ? 'bg-danger-red' 
-                      : item.priority === 'medium' 
+                      : item.priority === 'normal' 
                         ? 'bg-warning-amber' 
                         : 'bg-success-green';
                     return (

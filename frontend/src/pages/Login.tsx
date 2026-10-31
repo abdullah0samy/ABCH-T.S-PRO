@@ -63,12 +63,12 @@ export default function Login() {
       >
         <div className="premium-card p-10 relative overflow-hidden">
           {/* Decorative Elements */}
-          <div className="absolute -top-24 -right-24 w-48 h-48 bg-primary-blue/5 rounded-full blur-3xl opacity-50" />
-          <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-success-green/5 rounded-full blur-3xl opacity-50" />
+          <div className="absolute -top-24 -right-24 w-48 h-48 bg-[#C8925A]/10 rounded-full blur-3xl opacity-60" />
+          <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-primary-blue/5 rounded-full blur-3xl opacity-50" />
 
           <div className="relative z-10">
             <div className="flex flex-col items-center mb-10 text-center">
-              <div className="w-24 h-24 mb-6 drop-shadow-2xl">
+              <div className="w-24 h-24 mb-6 logo-badge flex items-center justify-center">
                 <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" />
               </div>
               <h1 className="text-2xl sm:text-3xl font-extrabold text-[var(--text-main)] mb-2 tracking-tight leading-tight">{t.loginTitle}</h1>
@@ -112,14 +112,14 @@ export default function Login() {
                     type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="input-surface w-full py-4 px-6 pr-14 bg-[var(--border-dim)]"
+                    className="input-surface w-full py-4 px-6 pe-14 bg-[var(--border-dim)]"
                     placeholder={t.passwordPlaceholder}
                     required
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-all p-1"
+                    className="absolute end-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-secondary)] transition-all p-1"
                     tabIndex={-1}
                   >
                     {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}

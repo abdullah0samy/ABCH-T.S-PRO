@@ -15,6 +15,8 @@
   --color-danger-red: #E11D48;
   --color-medical-teal: #14B8A6;
   --color-medical-blue: #3B82F6;
+  --color-brand-gold: #C8925A;
+  --color-brand-gold-light: #E2B886;
 }
 
 :root {
@@ -147,6 +149,18 @@
   .input-field:focus {
     box-shadow: 0 0 0 2px var(--color-primary-blue);
   }
+
+  .logo-badge {
+    background-color: #0F172A;
+    border: 1px solid rgba(200, 146, 90, 0.35);
+    border-radius: 1rem;
+    padding: 0.5rem;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.25);
+  }
+
+  .dark .logo-badge {
+    background-color: rgba(255, 255, 255, 0.05);
+  }
 }
 
 ::-webkit-scrollbar {
@@ -167,7 +181,7 @@
   background-color: var(--border-strong);
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 1023.98px) {
   .sidebar-overlay {
     position: fixed;
     inset: 0;
@@ -205,4 +219,17 @@
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
+}
+
+@media print {
+  aside, header, .no-print, .sidebar-mobile, .sidebar-overlay {
+    display: none !important;
+  }
+  body, main, .premium-card {
+    background: #ffffff !important;
+    color: #000000 !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+    height: auto !important;
+  }
 }

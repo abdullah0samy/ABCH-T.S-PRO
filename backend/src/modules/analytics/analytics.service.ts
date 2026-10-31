@@ -32,12 +32,13 @@ export class AnalyticsService {
     return false;
   }
 
-  async getDashboardSummary(userRole: string, userId: number, userDeptId: number | null | undefined) {
+  async getDashboardSummary(userRole: string, userId: number, userDeptId: number | null | undefined, days?: number) {
     if (!await this.checkAnalyticsPermission(userId, userRole, userDeptId)) {
       throw new ForbiddenException({ message: 'You do not have permission to view analytics', code: 'ANALYTICS_FORBIDDEN' });
     }
     const baseWhere = getBaseTicketFilter(userRole, userId, userDeptId);
-    const baseWhereArchived = { ...baseWhere, isArchived: false };
+    const dateFilter = days && !isNaN(days) && days > 0 ? { createdAt: { gte: new Date(Date.now() - days * 24 * 60 * 60 * 1000) } } : {};
+    const baseWhereArchived = { ...baseWhere, isArchived: false, ...dateFilter };
 
     const [total, pending, open, resolved, slaBreachCount, resolvedInternal, resolvedExternal] = await Promise.all([
       this.prisma.ticket.count({ where: baseWhereArchived }),

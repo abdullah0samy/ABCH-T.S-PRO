@@ -35,6 +35,7 @@ import {
   File as FileIcon,
   Archive,
   Share2,
+  Printer,
   Mic
 } from 'lucide-react';
 import { motion } from 'motion/react';
@@ -297,7 +298,8 @@ export default function TicketDetailsPage({ ticketId }: { ticketId: number }) {
       });
       setShowTransferModal(false);
       queryClient.invalidateQueries({ queryKey: queryKeys.tickets.detail(ticketId) });
-    } catch (error) {
+    } catch (error: any) {
+      addNotification({ title: t.error, message: error?.message || 'Error transferring ticket', type: 'error' });
       console.error('Error transferring ticket:', error);
     } finally {
       setSubmitting(false);
@@ -521,7 +523,7 @@ export default function TicketDetailsPage({ ticketId }: { ticketId: number }) {
         </div>
 
         {isAgent && !isArchived && (
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3 w-full lg:w-auto no-print">
             <select
               value={ticket.assignedToId || ''}
               onChange={(e) => handleAssign(e.target.value)}
@@ -556,6 +558,14 @@ export default function TicketDetailsPage({ ticketId }: { ticketId: number }) {
             >
               <Share2 size={18} />
               <span>{t.share}</span>
+            </button>
+
+            <button
+              onClick={() => window.print()}
+              className="flex items-center gap-2 px-4 py-2 premium-card shadow-sm text-sm font-bold text-[var(--text-secondary)] transition-all"
+            >
+              <Printer size={18} />
+              <span>{t.printTicket}</span>
             </button>
 
             <div className="flex items-center gap-2 flex-wrap">
@@ -628,13 +638,22 @@ export default function TicketDetailsPage({ ticketId }: { ticketId: number }) {
         )}
 
         {canConfirmResolution && (
-          <button
-            onClick={() => setShowConfirmModal(true)}
-            className="flex items-center gap-2 px-6 py-3 rounded-xl bg-success-green text-white font-bold hover:bg-green-600 transition-all shadow-lg shadow-green-500/20"
-          >
-            <CheckCircle2 size={20} />
-            <span>{t.confirmResolution}</span>
-          </button>
+          <div className="flex flex-wrap items-center gap-3 no-print">
+            <button
+              onClick={() => setShowConfirmModal(true)}
+              className="flex items-center gap-2 px-6 py-3 rounded-xl bg-success-green text-white font-bold hover:bg-green-600 transition-all shadow-lg shadow-green-500/20"
+            >
+              <CheckCircle2 size={20} />
+              <span>{t.confirmResolution}</span>
+            </button>
+            <button
+              onClick={() => handleStatusChange('in_progress', { comment: language === 'ar' ? 'أعاد مقدم الطلب فتح التذكرة' : 'Reopened by requester' })}
+              className="flex items-center gap-2 px-5 py-3 rounded-xl border border-warning-amber/40 bg-warning-amber/10 text-warning-amber font-bold hover:bg-warning-amber/20 transition-all"
+            >
+              <RefreshCw size={18} />
+              <span>{t.reopenTicket}</span>
+            </button>
+          </div>
         )}
       </div>
 
@@ -661,9 +680,11 @@ export default function TicketDetailsPage({ ticketId }: { ticketId: number }) {
                   className="w-full px-4 py-3 rounded-xl border border-[var(--border-main)] bg-[var(--bg-main)] text-sm outline-none focus:ring-2 focus:ring-primary-blue"
                 >
                   <option value="">{t.selectDepartment}</option>
-                  {departments.filter(d => d.id !== ticket.departmentId).map(d => (
-                    <option key={d.id} value={d.id}>{language === 'ar' ? d.nameAr : d.nameEn}</option>
-                  ))}
+                  {departments
+                    .filter((d: any) => d.id !== ticket.departmentId && d.isActive !== false && (d.deptType === 'RECEIVER_ONLY' || d.deptType === 'BOTH' || !d.deptType))
+                    .map((d: any) => (
+                      <option key={d.id} value={d.id}>{language === 'ar' ? d.nameAr : d.nameEn}</option>
+                    ))}
                 </select>
               </div>
 
@@ -857,17 +878,27 @@ export default function TicketDetailsPage({ ticketId }: { ticketId: number }) {
                 />
               </div>
 
-              <div className="flex gap-3 pt-2">
+              <div className="flex flex-wrap gap-3 pt-2">
                 <button 
                   onClick={() => setShowConfirmModal(false)}
-                  className="flex-1 px-6 py-3 rounded-xl border border-[var(--border-main)] text-sm font-bold text-[var(--text-secondary)] hover:bg-[var(--border-dim)] transition-all"
+                  className="flex-1 px-4 py-3 rounded-xl border border-[var(--border-main)] text-sm font-bold text-[var(--text-secondary)] hover:bg-[var(--border-dim)] transition-all"
                 >
                   {t.cancel}
+                </button>
+                <button
+                  onClick={() => {
+                    setShowConfirmModal(false);
+                    handleStatusChange('in_progress', { comment: feedback || (language === 'ar' ? 'أعاد مقدم الطلب فتح التذكرة' : 'Reopened by requester') });
+                  }}
+                  disabled={submitting}
+                  className="flex-1 px-4 py-3 rounded-xl border border-warning-amber/40 bg-warning-amber/10 text-warning-amber text-sm font-bold hover:bg-warning-amber/20 transition-all disabled:opacity-50"
+                >
+                  {t.reopenTicket}
                 </button>
                 <button 
                   onClick={handleConfirmResolution}
                   disabled={submitting}
-                  className="flex-1 px-6 py-3 rounded-xl bg-success-green text-white text-sm font-bold hover:bg-green-600 transition-all disabled:opacity-50"
+                  className="flex-1 px-4 py-3 rounded-xl bg-success-green text-white text-sm font-bold hover:bg-green-600 transition-all disabled:opacity-50"
                 >
                   {submitting ? '...' : t.submitFeedback}
                 </button>
@@ -1385,7 +1416,7 @@ export default function TicketDetailsPage({ ticketId }: { ticketId: number }) {
                     {isAgent && (
                       <button 
                         onClick={() => handleUnlinkTicket(rt.id)}
-                        className="opacity-0 group-hover:opacity-100 text-danger-red p-1 hover:bg-danger-red/10 rounded transition-all"
+                        className="opacity-100 lg:opacity-0 lg:group-hover:opacity-100 focus-within:opacity-100 text-danger-red p-1 hover:bg-danger-red/10 rounded transition-all"
                       >
                         <X size={14} />
                       </button>

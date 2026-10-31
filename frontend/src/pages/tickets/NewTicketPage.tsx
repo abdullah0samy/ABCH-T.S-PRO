@@ -269,7 +269,7 @@ export default function NewTicketPage() {
             <h3 className="font-bold uppercase tracking-widest text-xs">{t.location}</h3>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             <div>
               <label className="block text-sm font-bold text-[var(--text-secondary)] mb-2">
                 {t.building} <span className="text-danger-red">*</span>
@@ -399,7 +399,7 @@ export default function NewTicketPage() {
 
             <div>
               <label className="block text-sm font-bold text-[var(--text-secondary)] mb-2">{t.priority}</label>
-              <div className="grid grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {['low', 'normal', 'high', 'critical'].map((p) => (
                   <button
                     key={p}
@@ -411,7 +411,7 @@ export default function NewTicketPage() {
                         : 'bg-[var(--bg-surface)] text-[var(--text-muted)] border-[var(--border-main)]'
                     }`}
                   >
-                    {p}
+                    {t[p as keyof typeof t] || p}
                   </button>
                 ))}
               </div>

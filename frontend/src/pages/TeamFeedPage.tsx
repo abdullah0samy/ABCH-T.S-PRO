@@ -15,6 +15,7 @@ import {
   FileText, 
   Send, 
   MoreHorizontal,
+  Trash2,
   Paperclip,
   X,
   Smile,
@@ -220,6 +221,11 @@ export default function TeamFeedPage() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ['team-notes'] })
   });
 
+  const { mutateAsync: deleteNote } = useMutation({
+    mutationFn: (noteId: number) => apiFetch(`/api/team-notes/${noteId}`, { method: 'DELETE' }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['team-notes'] })
+  });
+
   const handleCreateNote = async () => {
     if (!newNoteBody.trim() && attachments.length === 0) return;
     try {
@@ -387,9 +393,22 @@ export default function TeamFeedPage() {
                       <p className="text-[10px] text-[var(--text-muted)]">{new Date(note.createdAt).toLocaleString()}</p>
                     </div>
                   </div>
-                  <button className="text-[var(--text-muted)] hover:text-[var(--text-secondary)]">
-                    <MoreHorizontal size={20} />
-                  </button>
+                  {(user?.id === note.author.id || user?.role === 'super_admin') && (
+                    <button
+                      onClick={async () => {
+                        if (!confirm(t.deleteConfirm)) return;
+                        try {
+                          await deleteNote(note.id);
+                        } catch (err: any) {
+                          addNotification({ title: t.error, message: err?.message || 'Error deleting post', type: 'error' });
+                        }
+                      }}
+                      className="p-2 text-[var(--text-muted)] hover:text-danger-red hover:bg-danger-red/10 rounded-xl transition-all"
+                      title={t.deleteAction}
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  )}
                 </div>
 
                 <div className="text-[var(--text-secondary)] text-sm leading-relaxed whitespace-pre-wrap mb-4">
@@ -498,7 +517,7 @@ export default function TeamFeedPage() {
                           />
                           <button 
                             onClick={() => handleAddComment(note.id)}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 text-primary-blue hover:scale-110 transition-transform"
+                            className="absolute end-2 top-1/2 -translate-y-1/2 text-primary-blue hover:scale-110 transition-transform"
                           >
                             <Send size={16} />
                           </button>

@@ -286,7 +286,7 @@ export default function KnowledgeBasePage() {
               onClick={() => setSelectedArticle(null)}
               className="flex items-center gap-2 text-[var(--text-secondary)] hover:text-primary-blue transition-all font-bold"
             >
-              <ArrowLeft size={20} />
+              <ArrowLeft size={20} className={language === 'ar' ? 'rotate-180' : ''} />
               {t.backToKnowledgeBase}
             </button>
 
@@ -330,7 +330,7 @@ export default function KnowledgeBasePage() {
                   </div>
                 </div>
 
-                <div className="prose prose-invert max-w-none text-[var(--text-secondary)] leading-relaxed whitespace-pre-wrap">
+                <div className="prose dark:prose-invert max-w-none text-[var(--text-main)] leading-relaxed whitespace-pre-wrap">
                   {language === 'ar' ? selectedArticle.contentAr : selectedArticle.contentEn}
                 </div>
 
@@ -503,7 +503,7 @@ export default function KnowledgeBasePage() {
                       </div>
 
                       {hasKbPermission && (
-                        <div className="absolute top-4 right-4 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="absolute top-4 end-4 flex items-center gap-1 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
                           <button 
                             onClick={(e) => {
                               e.stopPropagation();
@@ -538,7 +538,7 @@ export default function KnowledgeBasePage() {
                           <User size={14} />
                           {language === 'ar' ? article.author.fullNameAr : article.author.fullNameEn}
                         </div>
-                        <ChevronRight size={18} className="text-[var(--text-muted)] group-hover:text-primary-blue group-hover:translate-x-1 transition-all" />
+                        <ChevronRight size={18} className="text-[var(--text-muted)] group-hover:text-primary-blue group-hover:translate-x-1 transition-all rtl:rotate-180" />
                       </div>
                     </motion.div>
                   ))}
@@ -551,7 +551,7 @@ export default function KnowledgeBasePage() {
                       onClick={() => { setPage(p => p - 1); window.scrollTo({ top: 300, behavior: 'smooth' }); }}
                       className="p-3 rounded-2xl border border-[var(--border-main)] text-[var(--text-secondary)] hover:text-primary-blue disabled:opacity-30 transition-all bg-[var(--bg-surface)]"
                     >
-                      <ChevronLeft size={24} />
+                      <ChevronLeft size={24} className={language === 'ar' ? 'rotate-180' : ''} />
                     </button>
                     <div className="flex items-center gap-1">
                       {Array.from({ length: totalPages }).map((_, i) => (

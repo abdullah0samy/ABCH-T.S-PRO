@@ -110,6 +110,17 @@ export const UserManagementPage: React.FC = () => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
+      const cleanPermissions: Record<string, boolean | null> = {};
+      if (currentUser?.permissionsOverride && typeof currentUser.permissionsOverride === 'object') {
+        for (const p of permissionKeys) {
+          const val = (currentUser.permissionsOverride as any)[p.key];
+          if (typeof val === 'boolean') {
+            cleanPermissions[p.key] = val;
+          } else {
+            cleanPermissions[p.key] = null;
+          }
+        }
+      }
       const payload: Record<string, any> = {
         badgeNumber: currentUser?.badgeNumber?.trim(),
         username: currentUser?.username?.trim(),
@@ -119,7 +130,7 @@ export const UserManagementPage: React.FC = () => {
         role: currentUser?.role || 'end_user',
         departmentId: currentUser?.departmentId ?? null,
         isActive: currentUser?.isActive ?? true,
-        permissionsOverride: currentUser?.permissionsOverride,
+        permissionsOverride: Object.keys(cleanPermissions).length > 0 ? cleanPermissions : undefined,
       };
       if (!currentUser?.id && (currentUser as any)?.password) {
         payload.password = (currentUser as any).password;
@@ -297,7 +308,7 @@ export const UserManagementPage: React.FC = () => {
                       </button>
                     </td>
                     <td className="px-6 py-4 text-end">
-                      <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="flex items-center justify-end gap-2 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
                         <button 
                           onClick={() => {
                             setCurrentUser(user);

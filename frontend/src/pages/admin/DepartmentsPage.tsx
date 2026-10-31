@@ -19,6 +19,7 @@ interface Department {
   deptType: string;
   slaHours?: number;
   isActive: boolean;
+  allowedTransferTargets?: { targetDeptId: number }[];
   _count?: { users: number };
 }
 
@@ -32,7 +33,8 @@ export default function DepartmentsPage() {
     descriptionEn: '', 
     deptType: 'RECEIVER_ONLY', 
     slaHours: 24,
-    isActive: true 
+    isActive: true,
+    allowedTransferTargetIds: [] as number[],
   });
   
   const { accessToken } = useAuthStore();
@@ -64,7 +66,8 @@ export default function DepartmentsPage() {
         descriptionEn: '', 
         deptType: 'RECEIVER_ONLY', 
         slaHours: 24,
-        isActive: true 
+        isActive: true,
+        allowedTransferTargetIds: [],
       });
     } catch (error: any) {
       addNotification({ title: t.error, message: error?.message || 'Something went wrong', type: 'error' });
@@ -104,7 +107,8 @@ export default function DepartmentsPage() {
               descriptionEn: '', 
               deptType: 'RECEIVER_ONLY', 
               slaHours: 24,
-              isActive: true 
+              isActive: true,
+              allowedTransferTargetIds: [],
             });
             setIsModalOpen(true);
           }}
@@ -149,7 +153,8 @@ export default function DepartmentsPage() {
                       descriptionEn: dept.descriptionEn || '', 
                       deptType: dept.deptType, 
                       slaHours: dept.slaHours || 24,
-                      isActive: dept.isActive 
+                      isActive: dept.isActive,
+                      allowedTransferTargetIds: dept.allowedTransferTargets?.map(t => t.targetDeptId) || [],
                     });
                     setIsModalOpen(true);
                   }}
@@ -302,6 +307,38 @@ export default function DepartmentsPage() {
                   </label>
                 </div>
               </div>
+
+              {departments.filter(d => d.id !== editingDept?.id && (d.deptType === 'RECEIVER_ONLY' || d.deptType === 'BOTH')).length > 0 && (
+                <div>
+                  <label className="block text-sm font-bold text-[var(--text-secondary)] mb-1">
+                    {t.allowedTransferTargets}
+                  </label>
+                  <p className="text-xs text-[var(--text-muted)] mb-2">{t.allowedTransferTargetsHint}</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-36 overflow-y-auto p-3 rounded-xl border border-[var(--border-main)] bg-[var(--bg-main)]">
+                    {departments
+                      .filter(d => d.id !== editingDept?.id && (d.deptType === 'RECEIVER_ONLY' || d.deptType === 'BOTH'))
+                      .map(target => {
+                        const checked = formData.allowedTransferTargetIds.includes(target.id);
+                        return (
+                          <label key={target.id} className="flex items-center gap-2 text-xs font-bold text-[var(--text-main)] cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={(e) => {
+                                const next = e.target.checked
+                                  ? [...formData.allowedTransferTargetIds, target.id]
+                                  : formData.allowedTransferTargetIds.filter(id => id !== target.id);
+                                setFormData({ ...formData, allowedTransferTargetIds: next });
+                              }}
+                              className="w-4 h-4 rounded border-[var(--border-main)] text-primary-blue focus:ring-primary-blue"
+                            />
+                            <span>{language === 'ar' ? target.nameAr : target.nameEn}</span>
+                          </label>
+                        );
+                      })}
+                  </div>
+                </div>
+              )}
               
               <div className="flex gap-3 pt-4">
                 <button

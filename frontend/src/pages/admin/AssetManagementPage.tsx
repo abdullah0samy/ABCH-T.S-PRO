@@ -163,7 +163,7 @@ export default function AssetManagementPage() {
           { label: t.totalAssets, value: assets.length, icon: Package, color: 'text-blue-500', bg: 'bg-blue-500/10' },
           { label: t.active, value: assets.filter(a => a.status === 'active').length, icon: ShieldCheck, color: 'text-green-500', bg: 'bg-green-500/10' },
           { label: t.maintenance, value: assets.filter(a => a.status === 'maintenance').length, icon: Calendar, color: 'text-amber-500', bg: 'bg-amber-500/10' },
-          { label: t.retired, value: assets.filter(a => a.status === 'retired').length, icon: Trash2, color: 'text-[var(--text-secondary)]', bg: 'bg-[var(--bg-main)]0/10' },
+          { label: t.retired, value: assets.filter(a => a.status === 'retired').length, icon: Trash2, color: 'text-[var(--text-secondary)]', bg: 'bg-slate-500/10' },
         ].map((stat, i) => (
           <div key={i} className="bg-[var(--bg-surface)] p-4 rounded-2xl border border-[var(--border-main)] flex items-center gap-4">
             <div className={`w-12 h-12 rounded-xl ${stat.bg} flex items-center justify-center ${stat.color}`}>
@@ -252,7 +252,7 @@ export default function AssetManagementPage() {
                     </span>
                   </td>
                   <td className="px-6 py-4 text-end">
-                    <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all">
+                    <div className="flex items-center justify-end gap-2 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 focus-within:opacity-100 transition-all">
                       <button 
                         onClick={() => {
                           setEditingAsset(asset);

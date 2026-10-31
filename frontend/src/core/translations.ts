@@ -428,6 +428,16 @@ export const translations = {
     passwordMismatch: 'New password and confirmation do not match.',
     forcePasswordChangeWarning: 'Security Notice: You are using a temporary password. Please change your password now.',
     slaHours: 'SLA Hours',
+    low: 'Low',
+    normal: 'Normal',
+    high: 'High',
+    critical: 'Critical',
+    reopenTicket: 'Reopen Ticket',
+    printTicket: 'Print',
+    allowedTransferTargets: 'Allowed Transfer Targets',
+    allowedTransferTargetsHint: 'Leave all unchecked to allow transferring to any receiving department.',
+    last7Days: 'Last 7 Days',
+    allTime: 'All Time',
   },
   ar: {
     appName: 'ABCH Ticketing CRM',
@@ -857,6 +867,16 @@ export const translations = {
     passwordMismatch: 'كلمة المرور الجديدة وتأكيدها غير متطابقين.',
     forcePasswordChangeWarning: 'تنبيه أمني: أنت تستخدم كلمة مرور مؤقتة. يرجى تغيير كلمة المرور الآن.',
     slaHours: 'ساعات اتفاقية الخدمة (SLA)',
+    low: 'منخفضة',
+    normal: 'عادية',
+    high: 'عالية',
+    critical: 'حرجة',
+    reopenTicket: 'إعادة فتح التذكرة',
+    printTicket: 'طباعة',
+    allowedTransferTargets: 'الأقسام المسموح بالتحويل إليها',
+    allowedTransferTargetsHint: 'اترك الكل غير محدد للسماح بالتحويل لأي قسم مستقبل.',
+    last7Days: 'آخر 7 أيام',
+    allTime: 'كل الأوقات',
   }
 };
 

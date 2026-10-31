@@ -407,7 +407,7 @@ export default function MyTicketsPage() {
               disabled={currentPage === 1}
               className="flex items-center gap-1 px-4 py-2 rounded-xl border border-[var(--border-main)] text-sm font-bold text-[var(--text-secondary)] hover:bg-[var(--border-dim)] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              <ChevronLeft size={16} />
+              <ChevronLeft size={16} className={language === 'ar' ? 'rotate-180' : ''} />
               {language === 'ar' ? 'السابق' : 'Previous'}
             </button>
             <span className="px-4 py-2 text-sm font-bold text-[var(--text-secondary)]">
@@ -419,7 +419,7 @@ export default function MyTicketsPage() {
               className="flex items-center gap-1 px-4 py-2 rounded-xl border border-[var(--border-main)] text-sm font-bold text-[var(--text-secondary)] hover:bg-[var(--border-dim)] transition-all disabled:opacity-40 disabled:cursor-not-allowed"
             >
               {language === 'ar' ? 'التالي' : 'Next'}
-              <ChevronRight size={16} />
+              <ChevronRight size={16} className={language === 'ar' ? 'rotate-180' : ''} />
             </button>
           </div>
         </div>

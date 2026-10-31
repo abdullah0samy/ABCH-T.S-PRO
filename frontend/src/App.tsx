@@ -208,7 +208,7 @@ function AppContent() {
 
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth >= 1024) setSidebarOpen(true);
+      if (window.innerWidth >= 1024) setSidebarOpen(false);
     };
     handleResize();
     window.addEventListener('resize', handleResize);
@@ -282,7 +282,7 @@ function AppContent() {
   const sidebar = (
     <aside className={`h-full bg-[var(--bg-surface)] border-e border-[var(--border-main)] flex flex-col transition-colors duration-300`}>
       <div className="p-5 flex items-center gap-3 border-b border-[var(--border-dim)]">
-        <div className="w-9 h-9 flex items-center justify-center shrink-0">
+        <div className="w-10 h-10 logo-badge flex items-center justify-center shrink-0">
           <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" />
         </div>
         <div>
@@ -400,7 +400,7 @@ function AppContent() {
               </button>
 
               {showNotifications && (
-                <div className={`absolute top-12 end-0 w-80 bg-[var(--bg-surface)] rounded-2xl border border-[var(--border-main)] shadow-2xl z-50 overflow-hidden`}>
+                <div className={`max-sm:fixed max-sm:inset-x-3 max-sm:top-16 max-sm:w-auto sm:absolute sm:top-12 sm:end-0 sm:w-80 bg-[var(--bg-surface)] rounded-2xl border border-[var(--border-main)] shadow-2xl z-50 overflow-hidden`}>
                   <div className="p-3 border-b border-[var(--border-dim)] flex items-center justify-between">
                     <h3 className="font-bold text-sm text-[var(--text-main)]">{language === 'ar' ? 'التنبيهات' : 'Notifications'}</h3>
                     <button

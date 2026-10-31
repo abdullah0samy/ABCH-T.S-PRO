@@ -274,7 +274,7 @@ export const RoleManagementPage: React.FC = () => {
                           key={perm.key}
                           type="button"
                           onClick={() => toggleDeptPerm(dept, perm.key)}
-                          className={`flex items-center justify-between p-2.5 rounded-xl border text-left transition-all ${
+                          className={`flex items-center justify-between p-2.5 rounded-xl border text-start transition-all ${
                             enabled
                               ? 'bg-primary-blue/5 border-primary-blue/30 text-[var(--text-main)]'
                               : 'bg-[var(--bg-main)] border-[var(--border-dim)] text-[var(--text-muted)]'

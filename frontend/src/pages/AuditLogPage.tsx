@@ -164,7 +164,7 @@ export default function AuditLogPage() {
     return (
       <div className="space-y-2">
         {changes.map((c) => (
-          <div key={c.key} className="grid grid-cols-[120px_1fr_auto_1fr] gap-2 items-center text-xs">
+          <div key={c.key} className="grid grid-cols-1 sm:grid-cols-[120px_1fr_auto_1fr] gap-2 items-center text-xs">
             <span className="font-bold text-[var(--text-main)] capitalize truncate">{c.key}</span>
             <span className="text-danger-red line-through truncate bg-danger-red/5 px-2 py-1 rounded">{c.old}</span>
             <ArrowRightLeft size={12} className="text-[var(--text-muted)] shrink-0" />

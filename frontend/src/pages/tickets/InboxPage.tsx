@@ -262,14 +262,14 @@ export default function InboxPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <form onSubmit={handleSearch} className="relative">
+          <form onSubmit={handleSearch} className="relative w-full sm:w-auto">
             <Search className="absolute start-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" size={18} />
             <input
               type="text"
               placeholder={t.search}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="input-surface ps-10 pe-4 py-2 w-64 bg-[var(--bg-surface)]/50"
+              className="input-surface ps-10 pe-4 py-2 w-full sm:w-64 bg-[var(--bg-surface)]/50"
             />
           </form>
 
@@ -319,7 +319,7 @@ export default function InboxPage() {
             placeholder={t.creatorName}
             value={creatorNameFilter}
             onChange={(e) => setCreatorNameFilter(e.target.value)}
-            className="input-surface px-4 py-2 w-40 bg-[var(--bg-surface)]/50"
+            className="input-surface px-4 py-2 w-full sm:w-40 bg-[var(--bg-surface)]/50"
           />
 
           <select
@@ -391,7 +391,7 @@ export default function InboxPage() {
 
       <div className="premium-card overflow-hidden">
         {selectedTickets.length > 0 && (
-          <div className="bg-primary-blue/10 px-6 py-4 flex items-center justify-between border-b border-primary-blue/20">
+          <div className="bg-primary-blue/10 px-6 py-4 flex flex-wrap items-center justify-between gap-3 border-b border-primary-blue/20">
             <div className="flex items-center gap-4">
               <span className="text-sm font-bold text-primary-blue">
                 {t.ticketsSelected.replace('{count}', String(selectedTickets.length))}
@@ -404,7 +404,7 @@ export default function InboxPage() {
               </button>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               <div className="flex items-center gap-2">
                 <RefreshCw size={14} className="text-[var(--text-muted)]" />
                 <select 
@@ -657,7 +657,7 @@ export default function InboxPage() {
                   onClick={() => window.dispatchEvent(new CustomEvent('navigate', { detail: `/tickets/${ticket.id}` }))}
                   className={`bg-[var(--bg-surface)] rounded-2xl border p-6 shadow-sm hover:shadow-xl transition-all cursor-pointer group relative ${selectedTickets.includes(ticket.id) ? 'border-primary-blue ring-2 ring-primary-blue/20' : 'border-[var(--border-main)]'}`}
                 >
-                  <div className="absolute top-4 right-4">
+                  <div className="absolute top-4 end-4">
                     <button 
                       onClick={(e) => handleSelectTicket(ticket.id, e)}
                       className={`transition-all ${selectedTickets.includes(ticket.id) ? 'text-primary-blue' : 'text-[var(--text-muted)] group-hover:text-[var(--text-muted)]'}`}

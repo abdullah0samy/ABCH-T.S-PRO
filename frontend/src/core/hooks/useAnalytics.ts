@@ -2,10 +2,10 @@ import { useQuery } from '@tanstack/react-query';
 import { apiFetch } from '../api';
 import { queryKeys } from '../queryKeys';
 
-export function useDashboardSummary() {
+export function useDashboardSummary(days?: number) {
   return useQuery({
-    queryKey: queryKeys.analytics.dashboard({ type: 'summary' }),
-    queryFn: () => apiFetch('/api/analytics/dashboard-summary'),
+    queryKey: queryKeys.analytics.dashboard({ type: 'summary', days }),
+    queryFn: () => apiFetch(`/api/analytics/dashboard-summary${days ? `?days=${days}` : ''}`),
     // Dashboard data can be kept fresh for a short time
     staleTime: 60 * 1000, 
   });

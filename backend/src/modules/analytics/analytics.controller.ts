@@ -19,8 +19,9 @@ export class AnalyticsController {
   @Get('dashboard-summary')
   @UseGuards(RolesGuard)
   @Roles('super_admin', 'supervisor', 'agent')
-  async getDashboardSummary(@Req() req: any) {
-    return this.analyticsService.getDashboardSummary(req.user.role, req.user.id, req.user.departmentId ?? null);
+  async getDashboardSummary(@Req() req: any, @Query('days') days?: string) {
+    const parsedDays = days ? parseInt(days, 10) : undefined;
+    return this.analyticsService.getDashboardSummary(req.user.role, req.user.id, req.user.departmentId ?? null, parsedDays);
   }
 
   @Get('stats')
