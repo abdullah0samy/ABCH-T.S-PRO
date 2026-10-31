@@ -39,6 +39,10 @@ export class GlobalExceptionFilter implements ExceptionFilter {
         if (respObj.lockUntil) extraMeta.lockUntil = respObj.lockUntil;
         if (respObj.errors) extraMeta.errors = respObj.errors;
       }
+      if (status === HttpStatus.NOT_FOUND && /^Cannot (GET|POST|PUT|DELETE|PATCH)/i.test(message)) {
+        code = 'ENDPOINT_NOT_FOUND';
+        message = 'The requested service endpoint was not found.';
+      }
     } else if (isCsrfError(exception)) {
       // `csrf-csrf` throws its own ForbiddenError, not a Nest HttpException, so
       // it fell through to 500 — a stale or missing CSRF token looked like a

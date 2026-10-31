@@ -17,7 +17,7 @@ export default function ErrorBanner({ error, onRetry, onDismiss }: ErrorBannerPr
       className="flex items-center gap-3 p-4 rounded-2xl bg-danger-red/5 border border-danger-red/10 text-danger-red"
     >
       <AlertTriangle size={20} className="shrink-0" />
-      <span className="text-sm font-bold flex-1">{error}</span>
+      <span dir="auto" className="text-sm font-bold flex-1">{error}</span>
       {onRetry && (
         <button onClick={onRetry} className="flex items-center gap-1.5 text-xs font-bold underline hover:no-underline">
           <RefreshCw size={14} />

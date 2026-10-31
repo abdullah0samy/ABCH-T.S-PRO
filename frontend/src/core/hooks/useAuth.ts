@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiUrl, ensureCsrfToken, getCsrfToken, isCsrfRejection } from '../api';
+import { apiUrl, ensureCsrfToken, getCsrfToken, isCsrfRejection, localizeErrorMessage } from '../api';
 import { useAuthStore } from '../../store/authStore.ts';
 
 export function useLogin() {
@@ -33,7 +33,7 @@ export function useLogin() {
       }
 
       if (!response.ok) {
-        throw new Error(data.message || 'Login failed');
+        throw new Error(localizeErrorMessage(data?.message || 'Login failed', data?.code));
       }
 
       return data;

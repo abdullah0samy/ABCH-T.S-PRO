@@ -1,4 +1,4 @@
-import { Injectable, Inject, UnauthorizedException, ForbiddenException, BadRequestException, HttpException, Logger } from '@nestjs/common';
+import { Injectable, Inject, OnModuleInit, UnauthorizedException, ForbiddenException, BadRequestException, HttpException, Logger } from '@nestjs/common';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -32,13 +32,68 @@ function verifyDjangoPassword(password: string, djangoHash: string): boolean {
 }
 
 @Injectable()
-export class AuthService {
+export class AuthService implements OnModuleInit {
   private readonly logger = new Logger(AuthService.name);
 
   constructor(
     @Inject(PrismaService) private readonly prisma: PrismaService,
     @Inject(RefreshTokenStore) private readonly tokens: RefreshTokenStore,
   ) {}
+
+  async onModuleInit() {
+    try {
+      const userCount = await this.prisma.user.count();
+      if (userCount === 0) {
+        this.logger.log('🌱 Empty users table detected — bootstrapping default Super Admin (00001 / admin)...');
+        const passwordHash = await bcrypt.hash('Admin@123', 12);
+        const adminPerms = await this.prisma.deptPermissions.create({
+          data: {
+            canReceiveTickets: true,
+            canSendTickets: true,
+            canViewAllDeptTickets: true,
+            canAssignTickets: true,
+            canChangeStatus: true,
+            canTransferTickets: true,
+            canArchiveTickets: true,
+            canExportData: true,
+            canViewAnalytics: true,
+            canManageTeamNotes: true,
+            canManageDeptUsers: true,
+            canViewAuditLogs: true,
+            canManageKnowledgeBase: true,
+          },
+        });
+        const itDept = await this.prisma.department.create({
+          data: {
+            nameAr: 'تقنية المعلومات',
+            nameEn: 'Information Technology',
+            descriptionAr: 'قسم الدعم الفني وتقنية المعلومات',
+            descriptionEn: 'IT support and services',
+            deptType: 'BOTH',
+            defaultPermissionsId: adminPerms.id,
+            slaHours: 8,
+            isActive: true,
+          },
+        });
+        await this.prisma.user.create({
+          data: {
+            badgeNumber: '00001',
+            username: 'admin',
+            email: 'admin@abchospitaleg.com',
+            passwordHash,
+            fullNameAr: 'المدير العام',
+            fullNameEn: 'Super Admin',
+            role: 'super_admin',
+            departmentId: itDept.id,
+            isActive: true,
+          },
+        });
+        this.logger.log('✅ Default Super Admin created (badgeNumber: 00001, username: admin).');
+      }
+    } catch (err) {
+      this.logger.warn(`Could not run default admin bootstrap check: ${err instanceof Error ? err.message : err}`);
+    }
+  }
 
   async login(identifier: string, password: string) {
     if (!identifier || !password) {

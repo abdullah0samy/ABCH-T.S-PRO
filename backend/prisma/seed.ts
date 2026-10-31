@@ -91,16 +91,16 @@ async function main() {
 
   // Users
   await prisma.user.create({
-    data: { badgeNumber: 'admin', username: 'admin', email: 'admin@nuzultech.local', passwordHash, fullNameAr: 'المدير العام', fullNameEn: 'Super Admin', role: 'super_admin', departmentId: itDept.id },
+    data: { badgeNumber: '00001', username: 'admin', email: 'admin@nuzultech.local', passwordHash, fullNameAr: 'المدير العام', fullNameEn: 'Super Admin', role: 'super_admin', departmentId: itDept.id },
   });
   await prisma.user.create({
-    data: { badgeNumber: 'supervisor', username: 'supervisor', email: 'supervisor@nuzultech.local', passwordHash, fullNameAr: 'مشرف تقنية المعلومات', fullNameEn: 'IT Supervisor', role: 'supervisor', departmentId: itDept.id },
+    data: { badgeNumber: '00002', username: 'supervisor', email: 'supervisor@nuzultech.local', passwordHash, fullNameAr: 'مشرف تقنية المعلومات', fullNameEn: 'IT Supervisor', role: 'supervisor', departmentId: itDept.id },
   });
   await prisma.user.create({
-    data: { badgeNumber: 'agent', username: 'agent', email: 'agent@nuzultech.local', passwordHash, fullNameAr: 'فني الدعم الفني', fullNameEn: 'Support Agent', role: 'agent', departmentId: itDept.id },
+    data: { badgeNumber: '00003', username: 'agent', email: 'agent@nuzultech.local', passwordHash, fullNameAr: 'فني الدعم الفني', fullNameEn: 'Support Agent', role: 'agent', departmentId: itDept.id },
   });
   await prisma.user.create({
-    data: { badgeNumber: 'user', username: 'user', email: 'user@nuzultech.local', passwordHash, fullNameAr: 'مستخدم عام', fullNameEn: 'End User', role: 'end_user', departmentId: receptionDept.id },
+    data: { badgeNumber: '00004', username: 'user', email: 'user@nuzultech.local', passwordHash, fullNameAr: 'مستخدم عام', fullNameEn: 'End User', role: 'end_user', departmentId: receptionDept.id },
   });
 
   // Ticket types (IT department)

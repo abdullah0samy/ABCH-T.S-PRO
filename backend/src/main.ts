@@ -92,6 +92,52 @@ async function bootstrap() {
   app.use(express.json({ limit: '10mb' }));
   app.use(cookieParser());
   app.use('/uploads', express.static(UPLOADS_DIR));
+  app.use('/avatars', express.static(AVATARS_DIR));
+  app.use('/exports', express.static(EXPORTS_DIR));
+
+  // Reverse-Proxy Path Normalization Middleware:
+  // When deployed behind Traefik/Coolify with path-based routing (/api, /uploads)
+  // that applies StripPrefix, incoming requests arrive as `/auth/login` or `/health`
+  // instead of `/api/auth/login` or `/api/health`. Normalize them before CSRF and routing.
+  const API_SUBPATHS = [
+    '/health',
+    '/auth',
+    '/tickets',
+    '/users',
+    '/admin',
+    '/analytics',
+    '/assets',
+    '/audit',
+    '/knowledge',
+    '/notifications',
+    '/profile',
+    '/team-notes',
+    '/uploads',
+    '/docs',
+  ];
+
+  app.use((req: express.Request, _res: express.Response, next: express.NextFunction) => {
+    const urlPath = (req.url || '').split('?')[0];
+    if (!urlPath.startsWith('/api/') && urlPath !== '/api') {
+      const matchesApiSubpath = API_SUBPATHS.some(
+        (prefix) => urlPath === prefix || urlPath.startsWith(`${prefix}/`),
+      );
+      if (matchesApiSubpath) {
+        // Static file GETs under /uploads/... are already served above; only rewrite /uploads if it's POST or /uploads/download/...
+        const isStaticUploadGet =
+          urlPath.startsWith('/uploads/') &&
+          req.method === 'GET' &&
+          !urlPath.startsWith('/uploads/download/');
+        if (!isStaticUploadGet) {
+          req.url = `/api${req.url}`;
+          if ((req as any).originalUrl && !(req as any).originalUrl.startsWith('/api')) {
+            (req as any).originalUrl = `/api${(req as any).originalUrl}`;
+          }
+        }
+      }
+    }
+    next();
+  });
 
   // Deterministic, self-healing Single-Cookie HMAC CSRF Middleware.
   // Signs tokens with HMAC-SHA256 stored directly in the readable `x-csrf-token`
@@ -138,7 +184,7 @@ async function bootstrap() {
       res.clearCookie('csrf-internal', { path: '/' });
     }
 
-    const cleanPath = (req.originalUrl || req.url || '').split('?')[0];
+    const cleanPath = (req.url || '').split('?')[0];
     const cookieToken = req.cookies?.['x-csrf-token'] as string | undefined;
     const isCookieValid = verifyCsrfToken(cookieToken);
 
