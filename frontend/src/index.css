@@ -149,18 +149,6 @@
   .input-field:focus {
     box-shadow: 0 0 0 2px var(--color-primary-blue);
   }
-
-  .logo-badge {
-    background-color: #0F172A;
-    border: 1px solid rgba(200, 146, 90, 0.35);
-    border-radius: 1rem;
-    padding: 0.5rem;
-    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.25);
-  }
-
-  .dark .logo-badge {
-    background-color: rgba(255, 255, 255, 0.05);
-  }
 }
 
 ::-webkit-scrollbar {

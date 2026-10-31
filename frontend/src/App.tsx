@@ -282,9 +282,7 @@ function AppContent() {
   const sidebar = (
     <aside className={`h-full bg-[var(--bg-surface)] border-e border-[var(--border-main)] flex flex-col transition-colors duration-300`}>
       <div className="p-5 flex items-center gap-3 border-b border-[var(--border-dim)]">
-        <div className="w-10 h-10 logo-badge flex items-center justify-center shrink-0">
-          <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" />
-        </div>
+        <img src="/logo.svg" alt="ABCH Logo" className="h-9 w-auto object-contain shrink-0 select-none" />
         <div>
           <h1 className="text-base font-extrabold text-[var(--text-main)] leading-tight">{t.appName}</h1>
           <p className="text-[9px] text-[var(--text-muted)] font-bold uppercase tracking-widest">{t.appSubName}</p>

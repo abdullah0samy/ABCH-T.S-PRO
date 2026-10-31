@@ -8,6 +8,7 @@
     "start:dev": "nest start --watch",
     "start:prod": "node dist/main",
     "db:push": "prisma db push",
+    "db:upgrade": "tsx scripts/upgrade-legacy-db.ts && npx prisma db push",
     "db:migrate": "prisma migrate dev --name init",
     "db:seed": "tsx prisma/seed-local.ts",
     "seed-local": "tsx prisma/seed-local.ts",

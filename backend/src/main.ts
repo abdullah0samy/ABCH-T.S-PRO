@@ -9,7 +9,6 @@ import morgan from 'morgan';
 import cookieParser from 'cookie-parser';
 import * as express from 'express';
 import crypto from 'crypto';
-import { doubleCsrf } from 'csrf-csrf';
 import fs from 'fs';
 import { UPLOADS_DIR, AVATARS_DIR, EXPORTS_DIR } from './core/paths';
 
@@ -94,37 +93,74 @@ async function bootstrap() {
   app.use(cookieParser());
   app.use('/uploads', express.static(UPLOADS_DIR));
 
-  // CSRF double-submit (csrf-csrf v3).
-  // The library stores `<token>|<hash>` in its OWN httpOnly cookie and returns the
-  // bare token for the client to echo back in the `x-csrf-token` header.
-  // We therefore keep the library cookie separate (httpOnly, not JS-readable) and
-  // expose ONLY the bare token in a readable `x-csrf-token` cookie that the frontend
-  // reads and sends as a header. (Previously the code overwrote the library cookie
-  // with the bare token, stripping the hash and making every CSRF check fail.)
-  const csrfProtection = doubleCsrf({
-    getSecret: () => CSRF_SECRET,
-    getSessionIdentifier: () => '',
-    cookieName: 'csrf-internal',
-    cookieOptions: {
-      sameSite: 'strict',
+  // Deterministic, self-healing Single-Cookie HMAC CSRF Middleware.
+  // Signs tokens with HMAC-SHA256 stored directly in the readable `x-csrf-token`
+  // cookie (`${nonce}.${mac}`) so there is only one cookie and it can never get
+  // out of sync with an httpOnly shadow cookie.
+  const signCsrfToken = (nonce: string): string => {
+    const mac = crypto.createHmac('sha256', CSRF_SECRET).update(nonce).digest('hex');
+    return `${nonce}.${mac}`;
+  };
+
+  const verifyCsrfToken = (token: string | undefined): boolean => {
+    if (!token || typeof token !== 'string') return false;
+    const parts = token.split('.');
+    if (parts.length !== 2 || !parts[0] || !parts[1]) return false;
+    const expected = crypto.createHmac('sha256', CSRF_SECRET).update(parts[0]).digest('hex');
+    try {
+      return crypto.timingSafeEqual(Buffer.from(parts[1], 'utf8'), Buffer.from(expected, 'utf8'));
+    } catch {
+      return false;
+    }
+  };
+
+  const setFreshCsrfCookie = (res: express.Response): string => {
+    const token = signCsrfToken(crypto.randomBytes(32).toString('hex'));
+    res.cookie('x-csrf-token', token, {
+      sameSite: 'lax',
       secure: process.env.NODE_ENV === 'production',
       path: '/',
-      httpOnly: true,
-    },
-    size: 64,
-    getTokenFromRequest: (req) => req.headers['x-csrf-token'] as string,
-  });
-  app.use(csrfProtection.doubleCsrfProtection);
+      httpOnly: false,
+    });
+    return token;
+  };
+
+  const CSRF_EXEMPT_PATHS = new Set([
+    '/api/health',
+    '/api/auth/login',
+    '/api/auth/refresh',
+    '/api/auth/logout',
+  ]);
+
   app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
-    if (req.path === '/api/health' || !req.cookies?.['csrf-internal'] || !req.cookies?.['x-csrf-token']) {
-      const token = csrfProtection.generateToken(req, res); // sets the httpOnly `csrf-internal` cookie
-      res.cookie('x-csrf-token', token, {                   // JS-readable token for the frontend header
-        sameSite: 'strict',
-        secure: process.env.NODE_ENV === 'production',
-        path: '/',
+    // Clean up legacy csrf-csrf shadow cookie if present in browser
+    if (req.cookies?.['csrf-internal']) {
+      res.clearCookie('csrf-internal', { path: '/' });
+    }
+
+    const cleanPath = (req.originalUrl || req.url || '').split('?')[0];
+    const cookieToken = req.cookies?.['x-csrf-token'] as string | undefined;
+    const isCookieValid = verifyCsrfToken(cookieToken);
+
+    if (cleanPath === '/api/health' || !isCookieValid) {
+      setFreshCsrfCookie(res);
+    }
+
+    const method = req.method.toUpperCase();
+    if (['GET', 'HEAD', 'OPTIONS'].includes(method) || CSRF_EXEMPT_PATHS.has(cleanPath)) {
+      return next();
+    }
+
+    const headerToken = req.headers['x-csrf-token'] as string | undefined;
+    if (!headerToken || !isCookieValid || headerToken !== cookieToken) {
+      setFreshCsrfCookie(res);
+      return res.status(403).json({
+        message: 'Invalid or missing CSRF token. Please try again.',
+        code: 'CSRF_INVALID',
       });
     }
-    next();
+
+    return next();
   });
 
   // Swagger / OpenAPI docs (disabled in production)

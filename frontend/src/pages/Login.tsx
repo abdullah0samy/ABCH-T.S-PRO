@@ -68,9 +68,7 @@ export default function Login() {
 
           <div className="relative z-10">
             <div className="flex flex-col items-center mb-10 text-center">
-              <div className="w-24 h-24 mb-6 logo-badge flex items-center justify-center">
-                <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" />
-              </div>
+              <img src="/logo.svg" alt="ABCH Logo" className="w-44 sm:w-52 h-auto object-contain mx-auto mb-6 select-none" />
               <h1 className="text-2xl sm:text-3xl font-extrabold text-[var(--text-main)] mb-2 tracking-tight leading-tight">{t.loginTitle}</h1>
               <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[var(--text-muted)]">{t.loginSubTitle}</p>
             </div>
@@ -81,8 +79,8 @@ export default function Login() {
                 animate={{ opacity: 1, scale: 1 }}
                 className="mb-6 p-4 bg-danger-red/10 border border-danger-red/20 text-danger-red rounded-2xl text-sm font-bold flex items-center gap-3"
               >
-                <div className="w-2 h-2 bg-danger-red rounded-full animate-pulse" />
-                {error}
+                <div className="w-2 h-2 bg-danger-red rounded-full animate-pulse shrink-0" />
+                <span dir="auto">{error}</span>
               </motion.div>
             )}
 
