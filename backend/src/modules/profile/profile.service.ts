@@ -16,7 +16,9 @@ export class ProfileService {
       select: {
         id: true, badgeNumber: true, username: true, fullNameAr: true, fullNameEn: true,
         email: true, role: true, avatarUrl: true, about: true, isActive: true, departmentId: true,
-        department: { select: { nameAr: true, nameEn: true } },
+        forcePasswordChange: true,
+        department: { select: { id: true, nameAr: true, nameEn: true, defaultPermissions: true } },
+        permissionsOverride: true,
       },
     });
     if (!user) throw new NotFoundException('User not found');
@@ -34,7 +36,9 @@ export class ProfileService {
       select: {
         id: true, badgeNumber: true, username: true, fullNameAr: true, fullNameEn: true,
         email: true, role: true, avatarUrl: true, about: true, isActive: true, departmentId: true,
-        department: { select: { nameAr: true, nameEn: true } },
+        forcePasswordChange: true,
+        department: { select: { id: true, nameAr: true, nameEn: true, defaultPermissions: true } },
+        permissionsOverride: true,
       },
     });
 

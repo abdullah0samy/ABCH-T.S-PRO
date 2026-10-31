@@ -41,6 +41,9 @@ async function bootstrap() {
 
   const app = await NestFactory.create(AppModule);
 
+  const expressApp = app.getHttpAdapter().getInstance();
+  expressApp.set('trust proxy', 1);
+
   // BigInt serialization fix — same as Express app
   (BigInt.prototype as any).toJSON = function () {
     return this.toString();
@@ -100,7 +103,7 @@ async function bootstrap() {
   // with the bare token, stripping the hash and making every CSRF check fail.)
   const csrfProtection = doubleCsrf({
     getSecret: () => CSRF_SECRET,
-    getSessionIdentifier: (req) => req.ip || 'unknown',
+    getSessionIdentifier: () => '',
     cookieName: 'csrf-internal',
     cookieOptions: {
       sameSite: 'strict',
@@ -112,13 +115,15 @@ async function bootstrap() {
     getTokenFromRequest: (req) => req.headers['x-csrf-token'] as string,
   });
   app.use(csrfProtection.doubleCsrfProtection);
-  app.use((req, res, next) => {
-    const token = csrfProtection.generateToken(req, res); // sets the httpOnly `csrf-internal` cookie
-    res.cookie('x-csrf-token', token, {                   // JS-readable token for the frontend header
-      sameSite: 'strict',
-      secure: process.env.NODE_ENV === 'production',
-      path: '/',
-    });
+  app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
+    if (req.path === '/api/health' || !req.cookies?.['csrf-internal'] || !req.cookies?.['x-csrf-token']) {
+      const token = csrfProtection.generateToken(req, res); // sets the httpOnly `csrf-internal` cookie
+      res.cookie('x-csrf-token', token, {                   // JS-readable token for the frontend header
+        sameSite: 'strict',
+        secure: process.env.NODE_ENV === 'production',
+        path: '/',
+      });
+    }
     next();
   });
 

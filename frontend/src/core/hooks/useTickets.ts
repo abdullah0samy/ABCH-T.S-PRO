@@ -103,7 +103,7 @@ export function useUpdateTicketStatus() {
 export function useAssignTicket() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ ticketId, agentId }: { ticketId: number, agentId: number }) => 
+    mutationFn: ({ ticketId, agentId }: { ticketId: number; agentId: number | null }) => 
       apiFetch(`/api/tickets/${ticketId}/assign`, {
         method: 'PUT',
         body: JSON.stringify({ agentId }),

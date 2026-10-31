@@ -1,22 +1,29 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import ErrorBanner from '../components/ErrorBanner.tsx';
 import { useAuthStore } from '../store/authStore.ts';
 import { useSettingsStore } from '../store/settingsStore.ts';
 import { translations } from '../core/translations.ts';
 import { apiFetch } from '../core/api.ts';
-import { User, Shield, Camera, Upload } from 'lucide-react';
+import { useNotifications } from '../core/NotificationProvider.tsx';
+import { User, Shield, Camera, Upload, Key } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 export default function UserProfilePage() {
-  const { user: authUser, setAuth } = useAuthStore();
+  const { user: authUser, setAuth, logout } = useAuthStore();
   const queryClient = useQueryClient();
   const { language } = useSettingsStore();
   const t = translations[language];
+  const { addNotification } = useNotifications();
 
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [about, setAbout] = useState('');
   const [saved, setSaved] = useState(false);
+
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
+  const [changingPassword, setChangingPassword] = useState(false);
 
   const { data: user, isLoading: loading, error: queryError, refetch } = useQuery({
     queryKey: ['profile'],
@@ -85,8 +92,38 @@ export default function UserProfilePage() {
 
       await saveProfile(body);
     } catch (err: any) {
-      alert(err?.message || 'Failed to save profile');
+      addNotification({ title: t.error, message: err?.message || 'Failed to save profile', type: 'error' });
       console.error('Error saving profile:', err);
+    }
+  };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!currentPassword || !newPassword) return;
+    if (newPassword !== confirmNewPassword) {
+      addNotification({ title: t.error, message: t.passwordMismatch, type: 'error' });
+      return;
+    }
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{12,128}$/;
+    if (!passwordRegex.test(newPassword)) {
+      addNotification({ title: t.error, message: t.passwordRequirementsHint, type: 'error' });
+      return;
+    }
+    setChangingPassword(true);
+    try {
+      await apiFetch('/api/profile/password', {
+        method: 'POST',
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+      addNotification({ title: t.success, message: t.passwordChangedSuccess, type: 'success' });
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmNewPassword('');
+      logout();
+    } catch (err: any) {
+      addNotification({ title: t.error, message: err?.message || 'Failed to change password', type: 'error' });
+    } finally {
+      setChangingPassword(false);
     }
   };
 
@@ -189,6 +226,67 @@ export default function UserProfilePage() {
             </span>
           )}
         </div>
+      </div>
+
+      {/* Change Password Card */}
+      <div className="premium-card p-8 space-y-6 mt-8">
+        <h3 className="text-lg font-bold text-[var(--text-main)] flex items-center gap-2">
+          <Key className="text-primary-blue" size={20} />
+          {t.changePassword}
+        </h3>
+        <form onSubmit={handleChangePassword} className="space-y-4">
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-1.5">
+              {t.currentPassword}
+            </label>
+            <input
+              type="password"
+              required
+              value={currentPassword}
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              className="w-full rounded-lg border border-[var(--border-dim)] bg-[var(--bg-main)] px-4 py-2.5 text-sm text-[var(--text-main)] focus:outline-none focus:ring-2 focus:ring-primary-blue/50"
+            />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-1.5">
+                {t.newPassword}
+              </label>
+              <input
+                type="password"
+                required
+                minLength={12}
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                className="w-full rounded-lg border border-[var(--border-dim)] bg-[var(--bg-main)] px-4 py-2.5 text-sm text-[var(--text-main)] focus:outline-none focus:ring-2 focus:ring-primary-blue/50"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-[var(--text-secondary)] mb-1.5">
+                {t.confirmNewPassword}
+              </label>
+              <input
+                type="password"
+                required
+                minLength={12}
+                value={confirmNewPassword}
+                onChange={(e) => setConfirmNewPassword(e.target.value)}
+                className="w-full rounded-lg border border-[var(--border-dim)] bg-[var(--bg-main)] px-4 py-2.5 text-sm text-[var(--text-main)] focus:outline-none focus:ring-2 focus:ring-primary-blue/50"
+              />
+            </div>
+          </div>
+          <p className="text-xs text-[var(--text-muted)]">{t.passwordRequirementsHint}</p>
+          <div>
+            <button
+              type="submit"
+              disabled={changingPassword || !currentPassword || !newPassword || !confirmNewPassword}
+              className="btn-primary inline-flex items-center gap-2"
+            >
+              <Key size={16} />
+              {changingPassword ? t.saving : t.changePassword}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
     </>

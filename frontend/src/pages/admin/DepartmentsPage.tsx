@@ -4,7 +4,9 @@ import { useDismissibleError } from '../../core/hooks/useDismissibleError.ts';
 import { useAuthStore } from '../../store/authStore.ts';
 import { useSettingsStore } from '../../store/settingsStore.ts';
 import { translations } from '../../core/translations.ts';
+import { apiFetch } from '../../core/api.ts';
 import { useAdminList, useAdminMutation } from '../../core/hooks/useAdmin.ts';
+import { useNotifications } from '../../core/NotificationProvider.tsx';
 import { Users, Plus, Edit2, Trash2, X, Shield } from 'lucide-react';
 import { motion } from 'motion/react';
 
@@ -15,6 +17,7 @@ interface Department {
   descriptionAr: string | null;
   descriptionEn: string | null;
   deptType: string;
+  slaHours?: number;
   isActive: boolean;
   _count?: { users: number };
 }
@@ -28,12 +31,14 @@ export default function DepartmentsPage() {
     descriptionAr: '', 
     descriptionEn: '', 
     deptType: 'RECEIVER_ONLY', 
+    slaHours: 24,
     isActive: true 
   });
   
   const { accessToken } = useAuthStore();
   const { language } = useSettingsStore();
   const t = translations[language];
+  const { addNotification } = useNotifications();
   
   const { data: departments = [], isLoading: loading, error: queryError, refetch } = useAdminList<Department>(
     '/api/admin/departments',
@@ -49,7 +54,7 @@ export default function DepartmentsPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await saveDepartment({ id: editingDept?.id, data: formData });
+      await saveDepartment({ id: editingDept?.id, data: { ...formData, slaHours: Number(formData.slaHours) || 24 } });
       setIsModalOpen(false);
       setEditingDept(null);
       setFormData({ 
@@ -58,11 +63,22 @@ export default function DepartmentsPage() {
         descriptionAr: '', 
         descriptionEn: '', 
         deptType: 'RECEIVER_ONLY', 
+        slaHours: 24,
         isActive: true 
       });
     } catch (error: any) {
-      alert(error?.message || 'Something went wrong');
+      addNotification({ title: t.error, message: error?.message || 'Something went wrong', type: 'error' });
       console.error('Error saving department:', error);
+    }
+  };
+
+  const handleDeleteDept = async (id: number) => {
+    if (!window.confirm(t.deleteConfirm)) return;
+    try {
+      await apiFetch(`/api/admin/departments/${id}`, { method: 'DELETE' });
+      refetch();
+    } catch (error: any) {
+      addNotification({ title: t.error, message: error?.message || 'Something went wrong', type: 'error' });
     }
   };
 
@@ -87,6 +103,7 @@ export default function DepartmentsPage() {
               descriptionAr: '', 
               descriptionEn: '', 
               deptType: 'RECEIVER_ONLY', 
+              slaHours: 24,
               isActive: true 
             });
             setIsModalOpen(true);
@@ -131,13 +148,22 @@ export default function DepartmentsPage() {
                       descriptionAr: dept.descriptionAr || '', 
                       descriptionEn: dept.descriptionEn || '', 
                       deptType: dept.deptType, 
+                      slaHours: dept.slaHours || 24,
                       isActive: dept.isActive 
                     });
                     setIsModalOpen(true);
                   }}
                   className="p-2 text-[var(--text-muted)] hover:text-primary-blue transition-all"
+                  title={t.edit}
                 >
                   <Edit2 size={16} />
+                </button>
+                <button
+                  onClick={() => handleDeleteDept(dept.id)}
+                  className="p-2 text-[var(--text-muted)] hover:text-danger-red transition-all"
+                  title={t.deleteAction}
+                >
+                  <Trash2 size={16} />
                 </button>
               </div>
             </div>
@@ -235,7 +261,7 @@ export default function DepartmentsPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
                   <label className="block text-sm font-bold text-[var(--text-secondary)] mb-2">
                     {t.departmentType}
@@ -249,6 +275,19 @@ export default function DepartmentsPage() {
                     <option value="SENDER_ONLY">{t.senderOnly}</option>
                     <option value="BOTH">{t.both}</option>
                   </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-bold text-[var(--text-secondary)] mb-2">
+                    {t.slaHours}
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    max="720"
+                    value={formData.slaHours}
+                    onChange={(e) => setFormData({ ...formData, slaHours: parseInt(e.target.value, 10) || 24 })}
+                    className="w-full px-4 py-2 rounded-xl border border-[var(--border-main)] bg-[var(--bg-surface)] text-[var(--text-main)] outline-none focus:ring-2 focus:ring-primary-blue"
+                  />
                 </div>
                 <div className="flex items-center gap-3 pt-8">
                   <input

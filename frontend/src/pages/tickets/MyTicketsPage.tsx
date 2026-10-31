@@ -122,13 +122,13 @@ export default function MyTicketsPage() {
 
         <div className="flex flex-col md:flex-row gap-4">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" size={18} />
+            <Search className="absolute start-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" size={18} />
             <input
               type="text"
               placeholder={t.search}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 pr-4 py-2 rounded-xl border border-[var(--border-main)] bg-[var(--bg-surface)] text-sm outline-none focus:ring-2 focus:ring-primary-blue w-full"
+              className="ps-10 pe-4 py-2 rounded-xl border border-[var(--border-main)] bg-[var(--bg-surface)] text-sm outline-none focus:ring-2 focus:ring-primary-blue w-full"
             />
           </div>
 
@@ -164,7 +164,7 @@ export default function MyTicketsPage() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 10 }}
-                    className="absolute right-0 mt-2 w-48 bg-[var(--bg-surface)] border border-[var(--border-main)] rounded-2xl shadow-xl z-50 p-4 space-y-2"
+                    className="absolute end-0 mt-2 w-48 bg-[var(--bg-surface)] border border-[var(--border-main)] rounded-2xl shadow-xl z-50 p-4 space-y-2"
                   >
                     {columns.map(col => (
                       <label key={col.id} className="flex items-center gap-3 cursor-pointer group">
@@ -214,7 +214,7 @@ export default function MyTicketsPage() {
       ) : viewMode === 'table' ? (
         <div className="bg-[var(--bg-surface)] rounded-3xl border border-[var(--border-main)] overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+            <table className="w-full text-start border-collapse">
               <thead>
                 <tr className="bg-[var(--border-dim)]/50 border-b border-[var(--border-dim)]">
                   {visibleColumns.includes('ticketNumber') && (
@@ -318,8 +318,8 @@ export default function MyTicketsPage() {
                         {language === 'ar' ? ticket.department?.nameAr : ticket.department?.nameEn}
                       </td>
                     )}
-                    <td className="px-6 py-4 text-right">
-                      <ChevronRight className="text-[var(--text-muted)] group-hover:text-primary-blue transition-all" size={20} />
+                    <td className="px-6 py-4 text-end">
+                      <ChevronRight className="text-[var(--text-muted)] group-hover:text-primary-blue transition-all rtl:rotate-180" size={20} />
                     </td>
                   </tr>
                 ))}

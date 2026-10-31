@@ -6,6 +6,7 @@ import { useSettingsStore } from '../../store/settingsStore.ts';
 import { translations } from '../../core/translations.ts';
 import { apiFetch } from '../../core/api.ts';
 import { useAdminList, useAdminMutation } from '../../core/hooks/useAdmin.ts';
+import { useNotifications } from '../../core/NotificationProvider.tsx';
 import { Layers, Plus, Edit2, Trash2, X } from 'lucide-react';
 import { motion } from 'motion/react';
 
@@ -32,6 +33,7 @@ export default function FloorsPage() {
   const { accessToken } = useAuthStore();
   const { language } = useSettingsStore();
   const t = translations[language];
+  const { addNotification } = useNotifications();
 
   const { data: floors = [], isLoading: loadingFloors, error: floorsError, refetch } = useAdminList<Floor>(
     '/api/admin/floors',
@@ -59,7 +61,7 @@ export default function FloorsPage() {
       setEditingFloor(null);
       setFormData({ nameAr: '', nameEn: '', buildingId: '', isActive: true });
     } catch (error: any) {
-      alert(error?.message || 'Something went wrong');
+      addNotification({ title: t.error, message: error?.message || 'Something went wrong', type: 'error' });
       console.error('Error saving floor:', error);
     }
   };
@@ -72,7 +74,7 @@ export default function FloorsPage() {
       });
       refetch();
     } catch (error: any) {
-      alert(error?.message || 'Something went wrong');
+      addNotification({ title: t.error, message: error?.message || 'Something went wrong', type: 'error' });
       console.error('Error deleting floor:', error);
     }
   };
@@ -103,7 +105,7 @@ export default function FloorsPage() {
       </div>
 
       <div className="bg-[var(--bg-surface)] rounded-2xl border border-[var(--border-main)] overflow-hidden shadow-sm">
-        <table className="w-full text-left border-collapse">
+        <table className="w-full text-start border-collapse">
           <thead>
             <tr className="bg-[var(--border-dim)]/50 border-b border-[var(--border-main)]">
               <th className="px-6 py-4 text-xs font-bold text-[var(--text-muted)] uppercase tracking-widest">
@@ -115,7 +117,7 @@ export default function FloorsPage() {
               <th className="px-6 py-4 text-xs font-bold text-[var(--text-muted)] uppercase tracking-widest">
                 {t.status}
               </th>
-              <th className="px-6 py-4 text-xs font-bold text-[var(--text-muted)] uppercase tracking-widest text-right">
+              <th className="px-6 py-4 text-xs font-bold text-[var(--text-muted)] uppercase tracking-widest text-end">
                 {t.actions}
               </th>
             </tr>
@@ -152,7 +154,7 @@ export default function FloorsPage() {
                     {floor.isActive ? t.active : t.inactive}
                   </span>
                 </td>
-                <td className="px-6 py-4 text-right">
+                <td className="px-6 py-4 text-end">
                   <div className="flex justify-end gap-2">
                     <button
                       onClick={() => {

@@ -280,7 +280,7 @@ function AppContent() {
   };
 
   const sidebar = (
-    <aside className={`h-full bg-[var(--bg-surface)] border-r border-[var(--border-main)] flex flex-col transition-colors duration-300`}>
+    <aside className={`h-full bg-[var(--bg-surface)] border-e border-[var(--border-main)] flex flex-col transition-colors duration-300`}>
       <div className="p-5 flex items-center gap-3 border-b border-[var(--border-dim)]">
         <div className="w-9 h-9 flex items-center justify-center shrink-0">
           <img src="/logo.png" alt="Logo" className="w-full h-full object-contain" />
@@ -400,7 +400,7 @@ function AppContent() {
               </button>
 
               {showNotifications && (
-                <div className={`absolute top-12 ${language === 'ar' ? 'right-0' : 'left-0'} w-80 bg-[var(--bg-surface)] rounded-2xl border border-[var(--border-main)] shadow-2xl z-50 overflow-hidden`}>
+                <div className={`absolute top-12 end-0 w-80 bg-[var(--bg-surface)] rounded-2xl border border-[var(--border-main)] shadow-2xl z-50 overflow-hidden`}>
                   <div className="p-3 border-b border-[var(--border-dim)] flex items-center justify-between">
                     <h3 className="font-bold text-sm text-[var(--text-main)]">{language === 'ar' ? 'التنبيهات' : 'Notifications'}</h3>
                     <button
@@ -457,7 +457,7 @@ function AppContent() {
               )}
             </div>
 
-            <div className="flex items-center gap-1 sm:gap-2 border-l border-[var(--border-main)] pl-2 sm:pl-4">
+            <div className="flex items-center gap-1 sm:gap-2 border-s border-[var(--border-main)] ps-2 sm:ps-4">
               <button
                 onClick={toggleTheme}
                 className="p-2 text-[var(--text-secondary)] hover:text-primary-blue transition-all rounded-lg hover:bg-[var(--border-dim)]"
@@ -476,8 +476,8 @@ function AppContent() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-3 ml-2 shrink-0">
-            <div className="text-right hidden sm:block">
+          <div className="flex items-center gap-2 sm:gap-3 ms-2 shrink-0">
+            <div className="text-end hidden sm:block">
               <p className="text-sm font-bold text-[var(--text-main)] leading-tight">{language === 'ar' ? user.fullNameAr : user.fullNameEn}</p>
               <p className="text-[9px] text-[var(--text-muted)] font-bold uppercase tracking-widest">{user.role.replace('_', ' ')}</p>
             </div>
@@ -491,6 +491,23 @@ function AppContent() {
           </div>
         </header>
 
+        {(user as any).forcePasswordChange && (
+          <div className="bg-amber-500/10 border-b border-amber-500/30 px-4 py-2.5 flex items-center justify-between gap-4 shrink-0">
+            <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 text-xs sm:text-sm font-bold">
+              <AlertTriangle size={18} className="shrink-0" />
+              <span>{t.forcePasswordChangeWarning}</span>
+            </div>
+            {currentPath.split('?')[0] !== '/profile' && (
+              <button
+                onClick={() => navigate('/profile')}
+                className="px-3 py-1 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-bold shrink-0 transition-colors"
+              >
+                {t.changePassword}
+              </button>
+            )}
+          </div>
+        )}
+
         <div className="flex-1 overflow-y-auto p-3 sm:p-4 lg:p-6 xl:p-8 bg-[var(--bg-main)]">
           <ErrorBoundary resetKey={currentPath} language={language}>
             {renderContent()}
@@ -499,7 +516,7 @@ function AppContent() {
       </main>
 
       {/* Toast Container */}
-      <div className="fixed bottom-4 right-4 z-[100] flex flex-col gap-2 pointer-events-none">
+      <div className="fixed bottom-4 end-4 z-[100] flex flex-col gap-2 pointer-events-none">
         <AnimatePresence>
           {toasts.map((toast) => (
             <motion.div

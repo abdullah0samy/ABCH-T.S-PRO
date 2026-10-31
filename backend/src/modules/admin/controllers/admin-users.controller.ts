@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards, Inject, BadRequestException, ConflictException } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Body, Param, Query, Req, UseGuards, Inject, BadRequestException, ConflictException } from '@nestjs/common';
 import bcrypt from 'bcryptjs';
 import { JwtAuthGuard } from '../../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../../common/guards/roles.guard';
@@ -26,20 +26,46 @@ export class AdminUsersController {
   constructor(@Inject(PrismaService) private readonly prisma: PrismaService) {}
 
   @Get()
-  async findAll(@Query('page') pageStr?: string, @Query('limit') limitStr?: string) {
+  @Roles('super_admin', 'supervisor', 'agent')
+  async findAll(@Req() req: any, @Query('page') pageStr?: string, @Query('limit') limitStr?: string) {
     const page = Math.max(1, Number(pageStr) || 1);
-    const limit = Math.min(100, Math.max(1, Number(limitStr) || 20));
+    const limit = Math.min(100, Math.max(1, Number(limitStr) || 50));
     const skip = (page - 1) * limit;
+
+    const isSuperAdmin = req.user?.role === 'super_admin';
+    const whereClause: any = isSuperAdmin
+      ? { deletedAt: null }
+      : {
+          deletedAt: null,
+          isActive: true,
+          departmentId: req.user?.departmentId ?? -1,
+        };
 
     const [users, total] = await Promise.all([
       this.prisma.user.findMany({
-        where: { deletedAt: null },
+        where: whereClause,
         skip,
         take: limit,
-        include: { department: true, permissionsOverride: true },
+        select: {
+          id: true,
+          badgeNumber: true,
+          username: true,
+          email: true,
+          fullNameAr: true,
+          fullNameEn: true,
+          role: true,
+          departmentId: true,
+          avatarUrl: true,
+          isActive: true,
+          forcePasswordChange: true,
+          lastLoginAt: true,
+          createdAt: true,
+          department: true,
+          ...(isSuperAdmin ? { permissionsOverride: true } : {}),
+        },
         orderBy: { fullNameEn: 'asc' },
       }),
-      this.prisma.user.count({ where: { deletedAt: null } }),
+      this.prisma.user.count({ where: whereClause }),
     ]);
 
     return {

@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useRef, useState, useCallb
 import { io, Socket } from 'socket.io-client';
 import { useAuthStore, refreshAccessToken } from '../store/authStore.ts';
 import { useSettingsStore } from '../store/settingsStore.ts';
+import { apiFetch } from './api.ts';
 
 const SOCKET_URL = (import.meta.env.VITE_API_BASE as string) || window.location.origin;
 
@@ -219,6 +220,34 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
     };
   }, [accessToken, user?.id, user?.departmentId, connectSocket]);
 
+  useEffect(() => {
+    if (!accessToken || !user) return;
+    let cancelled = false;
+    apiFetch('/api/notifications?limit=30')
+      .then((res) => {
+        if (cancelled || !res?.data) return;
+        const dbNotifs: Notification[] = res.data.map((n: any) => ({
+          id: String(n.id),
+          title: (language === 'ar' ? (n.titleAr || n.titleEn) : (n.titleEn || n.titleAr)) || (language === 'ar' ? 'تنبيه' : 'Notification'),
+          message: (language === 'ar' ? (n.bodyAr || n.bodyEn) : (n.bodyEn || n.bodyAr)) || '',
+          type: 'info',
+          createdAt: new Date(n.createdAt),
+          read: Boolean(n.isRead),
+          link: n.ticketId ? `/tickets/${n.ticketId}` : undefined,
+          ticketId: n.ticketId ?? undefined,
+        }));
+        setNotifications((prev) => {
+          const existingIds = new Set(dbNotifs.map((d) => d.id));
+          const merged = [...prev.filter((p) => !existingIds.has(p.id) && !/^\d+$/.test(p.id)), ...dbNotifs];
+          return merged.slice(0, MAX_NOTIFICATIONS);
+        });
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [accessToken, user?.id, language]);
+
   // Request notification permission on mount
   useEffect(() => {
     if (typeof window.Notification !== 'undefined' && Notification.permission === 'default') {
@@ -228,10 +257,14 @@ export const NotificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   const markAsRead = useCallback((id: string) => {
     setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+    if (/^\d+$/.test(id)) {
+      apiFetch(`/api/notifications/${id}/read`, { method: 'PUT' }).catch(() => {});
+    }
   }, []);
 
   const markAllAsRead = useCallback(() => {
     setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    apiFetch('/api/notifications/read-all', { method: 'PUT' }).catch(() => {});
   }, []);
 
   const clearNotifications = useCallback(() => {

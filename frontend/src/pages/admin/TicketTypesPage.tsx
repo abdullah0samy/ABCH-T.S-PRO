@@ -6,6 +6,7 @@ import { useSettingsStore } from '../../store/settingsStore.ts';
 import { translations } from '../../core/translations.ts';
 import { apiFetch } from '../../core/api.ts';
 import { useAdminList, useAdminMutation } from '../../core/hooks/useAdmin.ts';
+import { useNotifications } from '../../core/NotificationProvider.tsx';
 import { Tag, Plus, Edit2, Trash2, X, Palette } from 'lucide-react';
 import { motion } from 'motion/react';
 
@@ -41,6 +42,7 @@ export default function TicketTypesPage() {
   const { accessToken } = useAuthStore();
   const { language } = useSettingsStore();
   const t = translations[language];
+  const { addNotification } = useNotifications();
 
   const { data: types = [], isLoading: loadingTypes, error: typesError, refetch } = useAdminList<TicketType>(
     '/api/admin/ticket-types',
@@ -75,7 +77,7 @@ export default function TicketTypesPage() {
       setEditingType(null);
       setFormData({ nameAr: '', nameEn: '', departmentId: '', color: '#6B7280', displayOrder: 0, isActive: true });
     } catch (error: any) {
-      alert(error?.message || 'Something went wrong');
+      addNotification({ title: t.error, message: error?.message || 'Something went wrong', type: 'error' });
       console.error('Error saving ticket type:', error);
     }
   };
@@ -88,7 +90,7 @@ export default function TicketTypesPage() {
       });
       refetch();
     } catch (error: any) {
-      alert(error?.message || 'Something went wrong');
+      addNotification({ title: t.error, message: error?.message || 'Something went wrong', type: 'error' });
       console.error('Error deleting ticket type:', error);
     }
   };

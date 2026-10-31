@@ -211,7 +211,8 @@ export default function NewTicketPage() {
       const data = await createTicket({ ...formData, attachments });
 
       setSuccess(t.ticketCreatedSuccess.replace('{ticketNumber}', data.ticketNumber));
-      navigateTimerRef.current = setTimeout(() => window.dispatchEvent(new CustomEvent('navigate', { detail: '/inbox' })), 1500);
+      const targetPath = data?.id ? `/tickets/${data.id}` : (user?.role === 'end_user' ? '/my-tickets' : '/inbox');
+      navigateTimerRef.current = setTimeout(() => window.dispatchEvent(new CustomEvent('navigate', { detail: targetPath })), 1500);
       setAttachments([]);
       setFormData({
         subject: '',
@@ -268,7 +269,7 @@ export default function NewTicketPage() {
             <h3 className="font-bold uppercase tracking-widest text-xs">{t.location}</h3>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <div>
               <label className="block text-sm font-bold text-[var(--text-secondary)] mb-2">
                 {t.building} <span className="text-danger-red">*</span>
@@ -298,7 +299,16 @@ export default function NewTicketPage() {
                 {floors.map(f => <option key={f.id} value={f.id}>{language === 'ar' ? f.nameAr : f.nameEn}</option>)}
               </select>
             </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div>
+              <label className="block text-sm font-bold text-[var(--text-secondary)] mb-2">{t.room}</label>
+              <input
+                type="text"
+                value={formData.roomExtension}
+                onChange={(e) => setFormData({ ...formData, roomExtension: e.target.value })}
+                className="w-full px-4 py-2 rounded-xl border border-[var(--border-main)] bg-[var(--bg-surface)] text-[var(--text-main)] outline-none focus:ring-2 focus:ring-primary-blue"
+                placeholder="e.g. Room 402"
+              />
+            </div>
             <div>
               <label className="block text-sm font-bold text-[var(--text-secondary)] mb-2">{t.relatedAsset}</label>
               <select
@@ -310,17 +320,6 @@ export default function NewTicketPage() {
                 {assets.map(a => <option key={a.id} value={a.id}>{a.name} ({a.serialNumber})</option>)}
               </select>
             </div>
-            <div>
-              <label className="block text-sm font-bold text-[var(--text-secondary)] mb-2">{t.room}</label>
-              <input
-                type="text"
-                value={formData.roomExtension}
-                onChange={(e) => setFormData({ ...formData, roomExtension: e.target.value })}
-                className="w-full px-4 py-2 rounded-xl border border-[var(--border-main)] bg-[var(--bg-surface)] text-[var(--text-main)] outline-none focus:ring-2 focus:ring-primary-blue"
-                placeholder="e.g. Room 402"
-              />
-            </div>
-          </div>
           </div>
         </div>
 

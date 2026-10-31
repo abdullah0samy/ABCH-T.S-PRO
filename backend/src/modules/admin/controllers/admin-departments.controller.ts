@@ -19,6 +19,7 @@ export class AdminDepartmentsController {
   @Roles('super_admin', 'supervisor', 'agent')
   async findAll() {
     return this.prisma.department.findMany({
+      where: { deletedAt: null },
       include: { defaultPermissions: true, _count: { select: { users: true } } },
       orderBy: { nameEn: 'asc' },
     });

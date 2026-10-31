@@ -199,13 +199,13 @@ export default function AuditLogPage() {
             ))}
           </select>
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" size={16} />
+            <Search className="absolute start-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" size={16} />
             <input 
               type="text"
               placeholder={t.searchTicketId}
               value={filters.ticketId}
               onChange={(e) => setFilters({...filters, ticketId: e.target.value})}
-              className="pl-10 pr-4 py-2 bg-[var(--bg-surface)] border border-[var(--border-main)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary-blue transition-all w-40"
+              className="ps-10 pe-4 py-2 bg-[var(--bg-surface)] border border-[var(--border-main)] rounded-xl text-sm outline-none focus:ring-2 focus:ring-primary-blue transition-all w-40"
             />
           </div>
           <div className="flex items-center gap-2 bg-[var(--bg-surface)] border border-[var(--border-main)] rounded-xl px-3 py-2">
@@ -257,14 +257,14 @@ export default function AuditLogPage() {
       {/* Logs Table */}
       <div className="bg-[var(--bg-surface)] rounded-3xl border border-[var(--border-main)] overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-start border-collapse">
             <thead>
               <tr className="bg-[var(--border-dim)] border-b border-[var(--border-dim)]">
                 <th className="px-6 py-4 text-xs font-bold text-[var(--text-muted)] uppercase tracking-widest">{t.userLabel}</th>
                 <th className="px-6 py-4 text-xs font-bold text-[var(--text-muted)] uppercase tracking-widest">{t.action}</th>
                 <th className="px-6 py-4 text-xs font-bold text-[var(--text-muted)] uppercase tracking-widest">{t.entity}</th>
                 <th className="px-6 py-4 text-xs font-bold text-[var(--text-muted)] uppercase tracking-widest">{t.date}</th>
-                <th className="px-6 py-4 text-xs font-bold text-[var(--text-muted)] uppercase tracking-widest text-right">{t.preview}</th>
+                <th className="px-6 py-4 text-xs font-bold text-[var(--text-muted)] uppercase tracking-widest text-end">{t.preview}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--border-dim)]">
@@ -321,7 +321,7 @@ export default function AuditLogPage() {
                         {new Date(log.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                       </p>
                     </td>
-                    <td className="px-6 py-4 text-right">
+                    <td className="px-6 py-4 text-end">
                       <button 
                         onClick={() => {
                           setSelectedLog(log);

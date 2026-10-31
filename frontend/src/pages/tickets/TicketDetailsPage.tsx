@@ -125,6 +125,11 @@ interface Ticket {
 
 export default function TicketDetailsPage({ ticketId }: { ticketId: number }) {
   const queryClient = useQueryClient();
+  const { user } = useAuthStore();
+  const { language } = useSettingsStore();
+  const t = translations[language];
+  const { addNotification } = useNotifications();
+
   const { data: ticket, isLoading: loading } = useTicketDetails(ticketId);
   const { data: departmentsData } = useAdminDepartments();
   const { data: ticketTypesData } = useAdminTicketTypes();
@@ -135,6 +140,7 @@ export default function TicketDetailsPage({ ticketId }: { ticketId: number }) {
     queryKey: ['admin', 'users'],
     queryFn: () => apiFetch('/api/admin/users').then(res => Array.isArray(res) ? res : res.data),
     staleTime: 60 * 1000,
+    enabled: Boolean(user && user.role !== 'end_user'),
   });
   const agents = usersData?.filter((u: any) => u.departmentId === ticket?.departmentId) || [];
 
@@ -172,11 +178,6 @@ export default function TicketDetailsPage({ ticketId }: { ticketId: number }) {
   const [showLinkModal, setShowLinkModal] = useState(false);
   const [linkSearchTerm, setLinkSearchTerm] = useState('');
   const [linkSearchResults, setLinkSearchResults] = useState<any[]>([]);
-
-  const { user } = useAuthStore();
-  const { language } = useSettingsStore();
-  const t = translations[language];
-  const { addNotification } = useNotifications();
 
   useEffect(() => {
     // Check for confirm param
@@ -310,7 +311,7 @@ export default function TicketDetailsPage({ ticketId }: { ticketId: number }) {
       await apiFetch(`/api/tickets/${ticketId}/archive`, { method: 'PUT' });
       queryClient.invalidateQueries({ queryKey: queryKeys.tickets.detail(ticketId) });
     } catch (error: any) {
-      alert(error?.message || 'Error archiving ticket');
+      addNotification({ title: t.error, message: error?.message || 'Error archiving ticket', type: 'error' });
     } finally {
       setSubmitting(false);
     }
@@ -319,7 +320,7 @@ export default function TicketDetailsPage({ ticketId }: { ticketId: number }) {
   const handleShare = async () => {
     try {
       await navigator.clipboard.writeText(window.location.href);
-      alert(t.linkCopied);
+      addNotification({ title: t.linkCopiedTitle, message: t.linkCopied, type: 'success' });
     } catch (err) {
       console.error('Failed to copy text: ', err);
     }
@@ -414,9 +415,10 @@ export default function TicketDetailsPage({ ticketId }: { ticketId: number }) {
       await updateStatusMutation({ ticketId, status: newStatus, ...extraFields });
     } catch (error: any) {
       if (error?.code === 'ISSUE_TYPE_REQUIRED') {
-        alert(t.issueTypeRequired);
+        addNotification({ title: t.error, message: t.issueTypeRequired, type: 'error' });
         return;
       }
+      addNotification({ title: t.error, message: error?.message || 'Error updating status', type: 'error' });
       console.error('Error updating status:', error);
     }
   };
@@ -435,12 +437,12 @@ export default function TicketDetailsPage({ ticketId }: { ticketId: number }) {
 
   const handleAssign = async (agentIdStr: string) => {
     try {
-      const agentId = parseInt(agentIdStr, 10);
+      const agentId = agentIdStr ? parseInt(agentIdStr, 10) : null;
       await assignTicketMutation({ ticketId, agentId });
       addNotification({ title: t.assigned, message: '', type: 'success' });
     } catch (error: any) {
       console.error('Error assigning ticket:', error);
-      alert(error.message || 'Error assigning ticket');
+      addNotification({ title: t.error, message: error?.message || 'Error assigning ticket', type: 'error' });
     }
   };
 
@@ -463,7 +465,13 @@ export default function TicketDetailsPage({ ticketId }: { ticketId: number }) {
   if (loading) return <div className="p-8 text-center text-[var(--text-muted)]">{t.loading}</div>;
   if (!ticket) return <div className="p-8 text-center text-danger-red">Ticket not found or access denied</div>;
 
-  const isAgent = ticket.departmentId === (user?.departmentId || user?.department?.id) || user?.role === 'super_admin';
+  const userDeptId = user?.departmentId ?? user?.department?.id ?? null;
+  const isAgent =
+    user?.role === 'super_admin' ||
+    ((user?.role === 'supervisor' || user?.role === 'agent') &&
+      Number(ticket.departmentId) === Number(userDeptId));
+  const canConfirmResolution =
+    ticket.status === 'resolved' && Number(ticket.createdById) === Number(user?.id);
   const isLocked = (ticket.status === 'resolved' || ticket.status === 'closed') && user?.role !== 'super_admin';
   const isArchived = ticket.isArchived;
 
@@ -473,7 +481,7 @@ export default function TicketDetailsPage({ ticketId }: { ticketId: number }) {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-4">
           <button 
-            onClick={() => window.dispatchEvent(new CustomEvent('navigate', { detail: '/inbox' }))}
+            onClick={() => window.dispatchEvent(new CustomEvent('navigate', { detail: user?.role === 'end_user' ? '/my-tickets' : '/inbox' }))}
             className="p-2 hover:bg-[var(--bg-elevated)] rounded-xl transition-all text-[var(--text-muted)]"
           >
             <ArrowLeft size={24} className={language === 'ar' ? 'rotate-180' : ''} />
@@ -619,7 +627,7 @@ export default function TicketDetailsPage({ ticketId }: { ticketId: number }) {
           </div>
         )}
 
-        {!isAgent && ticket.status === 'resolved' && ticket.createdById === user?.id && (
+        {canConfirmResolution && (
           <button
             onClick={() => setShowConfirmModal(true)}
             className="flex items-center gap-2 px-6 py-3 rounded-xl bg-success-green text-white font-bold hover:bg-green-600 transition-all shadow-lg shadow-green-500/20"
@@ -784,7 +792,7 @@ export default function TicketDetailsPage({ ticketId }: { ticketId: number }) {
                 <button
                   onClick={() => {
                     if (!resolveTypeId) {
-                      alert(t.pleaseSelectIssueType);
+                      addNotification({ title: t.error, message: t.pleaseSelectIssueType, type: 'error' });
                       return;
                     }
                     setShowResolveModal(false);
@@ -889,10 +897,10 @@ export default function TicketDetailsPage({ ticketId }: { ticketId: number }) {
                   <RefreshCw size={18} className="text-primary-blue" />
                   <h3 className="font-bold uppercase tracking-widest text-xs">{t.transferHistory}</h3>
                 </div>
-                <div className="space-y-6 relative before:absolute before:left-4 before:top-2 before:bottom-2 before:w-0.5 before:bg-[var(--border-dim)]">
+                <div className="space-y-6 relative before:absolute before:start-4 before:top-2 before:bottom-2 before:w-0.5 before:bg-[var(--border-dim)]">
                   {ticket.transfers.map((transfer, idx) => (
-                    <div key={transfer.id} className="relative pl-10">
-                      <div className="absolute left-0 w-8 h-8 rounded-full bg-[var(--bg-surface)] border-2 border-primary-blue flex items-center justify-center z-10">
+                    <div key={transfer.id} className="relative ps-10">
+                      <div className="absolute start-0 w-8 h-8 rounded-full bg-[var(--bg-surface)] border-2 border-primary-blue flex items-center justify-center z-10">
                         <ArrowLeft size={14} className={`text-primary-blue ${language === 'ar' ? '' : 'rotate-180'}`} />
                       </div>
                       <div className="bg-[var(--border-dim)]/50 p-4 rounded-2xl border border-[var(--border-dim)] transition-all hover:border-primary-blue/30">
@@ -1443,13 +1451,13 @@ export default function TicketDetailsPage({ ticketId }: { ticketId: number }) {
             </div>
 
             <form onSubmit={handleLinkSearch} className="relative mb-6">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" size={18} />
+              <Search className="absolute start-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" size={18} />
               <input
                 type="text"
                 placeholder={t.linkTicketSearch}
                 value={linkSearchTerm}
                 onChange={(e) => setLinkSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-3 rounded-xl border border-[var(--border-main)] bg-[var(--border-dim)] text-[var(--text-main)] outline-none focus:ring-2 focus:ring-primary-blue"
+                className="w-full ps-10 pe-4 py-3 rounded-xl border border-[var(--border-main)] bg-[var(--border-dim)] text-[var(--text-main)] outline-none focus:ring-2 focus:ring-primary-blue"
               />
             </form>
 

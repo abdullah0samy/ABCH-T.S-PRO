@@ -24,12 +24,16 @@ export class UsersService {
       id: user.id,
       badgeNumber: user.badgeNumber,
       username: user.username,
+      email: user.email,
       fullNameAr: user.fullNameAr,
       fullNameEn: user.fullNameEn,
       role: user.role,
+      departmentId: user.departmentId,
       department: user.department,
+      permissionsOverride: user.permissionsOverride,
       langPref: user.langPref,
       avatarUrl: user.avatarUrl,
+      forcePasswordChange: user.forcePasswordChange,
     };
   }
 

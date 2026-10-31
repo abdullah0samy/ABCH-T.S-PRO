@@ -205,14 +205,18 @@ export default function DashboardPage() {
           <h2 className="text-2xl font-bold mb-2">{t.kbHelpTitle}</h2>
           <p className="text-blue-100 mb-6">{t.kbSearchDesc}</p>
           <div className="relative group">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-300 group-focus-within:text-white transition-colors" size={20} />
+            <Search className="absolute start-4 top-1/2 -translate-y-1/2 text-blue-300 group-focus-within:text-white transition-colors" size={20} />
             <input 
               type="text"
               placeholder={t.kbSearchPlaceholder}
-              className="w-full pl-12 pr-4 py-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 text-white placeholder:text-blue-200 outline-none focus:ring-2 focus:ring-white/50 transition-all"
+              className="w-full ps-12 pe-4 py-4 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 text-white placeholder:text-blue-200 outline-none focus:ring-2 focus:ring-white/50 transition-all"
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
-                  window.location.href = `/knowledge?search=${(e.target as HTMLInputElement).value}`;
+                  window.dispatchEvent(
+                    new CustomEvent('navigate', {
+                      detail: `/knowledge?search=${encodeURIComponent((e.target as HTMLInputElement).value)}`,
+                    }),
+                  );
                 }
               }}
             />
@@ -526,7 +530,7 @@ export default function DashboardPage() {
                 </div>
               </div>
               <button 
-                onClick={() => window.location.href = '/admin/assets'}
+                onClick={() => window.dispatchEvent(new CustomEvent('navigate', { detail: '/admin/assets' }))}
                 className="w-full mt-6 py-3 rounded-xl border border-[var(--border-main)] text-sm font-bold text-[var(--text-secondary)] hover:bg-[var(--border-dim)] transition-all flex items-center justify-center gap-2"
               >
                 {t.manageAssets}
@@ -545,7 +549,7 @@ export default function DashboardPage() {
                 </h3>
               </div>
               <div className="overflow-x-auto">
-                <table className="w-full text-left">
+                <table className="w-full text-start">
                   <thead>
                     <tr className="text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest border-b border-[var(--border-dim)]">
                       <th className="pb-4">{t.agent}</th>
@@ -631,12 +635,12 @@ export default function DashboardPage() {
                     {t.fromDate}
                   </label>
                   <div className="relative">
-                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" size={18} />
+                    <Calendar className="absolute start-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" size={18} />
                     <input 
                       type="date" 
                       value={exportStartDate}
                       onChange={(e) => setExportStartDate(e.target.value)}
-                      className="w-full pl-10 pr-4 py-3 rounded-xl border border-[var(--border-main)] bg-[var(--bg-main)] text-sm outline-none focus:ring-2 focus:ring-primary-blue"
+                      className="w-full ps-10 pe-4 py-3 rounded-xl border border-[var(--border-main)] bg-[var(--bg-main)] text-sm outline-none focus:ring-2 focus:ring-primary-blue"
                     />
                   </div>
                 </div>
@@ -645,12 +649,12 @@ export default function DashboardPage() {
                     {t.toDate}
                   </label>
                   <div className="relative">
-                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" size={18} />
+                    <Calendar className="absolute start-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" size={18} />
                     <input 
                       type="date" 
                       value={exportEndDate}
                       onChange={(e) => setExportEndDate(e.target.value)}
-                      className="w-full pl-10 pr-4 py-3 rounded-xl border border-[var(--border-main)] bg-[var(--bg-main)] text-sm outline-none focus:ring-2 focus:ring-primary-blue"
+                      className="w-full ps-10 pe-4 py-3 rounded-xl border border-[var(--border-main)] bg-[var(--bg-main)] text-sm outline-none focus:ring-2 focus:ring-primary-blue"
                     />
                   </div>
                 </div>
@@ -680,7 +684,7 @@ export default function DashboardPage() {
               </h3>
             </div>
             <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse">
+              <table className="w-full text-start border-collapse">
                 <thead>
                   <tr className="bg-[var(--border-dim)]/50 border-b border-[var(--border-dim)]">
                     <th className="px-6 py-4 text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">{t.fileName}</th>
@@ -724,7 +728,7 @@ export default function DashboardPage() {
                       <td className="px-6 py-4">
                         <span className="text-xs text-[var(--text-muted)]">{new Date(exp.createdAt).toLocaleString()}</span>
                       </td>
-                      <td className="px-6 py-4 text-right">
+                      <td className="px-6 py-4 text-end">
                         <a 
                           href={exp.fileUrl} 
                           download 

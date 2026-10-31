@@ -97,32 +97,32 @@ export default function ArchivePage() {
 
       <form onSubmit={handleSearch} className="mb-6">
         <div className="relative">
-          <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
+          <Search size={18} className="absolute start-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" />
           <input
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             placeholder={language === 'ar' ? 'بحث في الأرشيف...' : 'Search archived tickets...'}
-            className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-[var(--border-main)] bg-[var(--bg-surface)] text-[var(--text-main)] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full ps-10 pe-4 py-2.5 rounded-lg border border-[var(--border-main)] bg-[var(--bg-surface)] text-[var(--text-main)] placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
       </form>
 
       <div className="bg-[var(--bg-surface)] rounded-xl shadow-sm border border-[var(--border-main)] overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full text-start">
             <thead>
               <tr className="border-b border-[var(--border-main)] bg-[var(--border-dim)]/50">
-                <th className="text-right px-4 py-3 text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider cursor-pointer" onClick={() => handleSort('ticketNumber')}>
+                <th className="text-start px-4 py-3 text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider cursor-pointer" onClick={() => handleSort('ticketNumber')}>
                   <span className="flex items-center gap-1">{language === 'ar' ? 'رقم التذكرة' : 'Ticket #'} <ArrowUpDown size={14} /></span>
                 </th>
-                <th className="text-right px-4 py-3 text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider cursor-pointer" onClick={() => handleSort('subject')}>
+                <th className="text-start px-4 py-3 text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider cursor-pointer" onClick={() => handleSort('subject')}>
                   <span className="flex items-center gap-1">{t.subject} <ArrowUpDown size={14} /></span>
                 </th>
-                <th className="text-right px-4 py-3 text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">{t.creator}</th>
-                <th className="text-right px-4 py-3 text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">{language === 'ar' ? 'الحالة' : 'Status'}</th>
-                <th className="text-right px-4 py-3 text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">{t.priority}</th>
-                <th className="text-right px-4 py-3 text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">{language === 'ar' ? 'تاريخ الأرشفة' : 'Archived At'}</th>
+                <th className="text-start px-4 py-3 text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">{t.creator}</th>
+                <th className="text-start px-4 py-3 text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">{language === 'ar' ? 'الحالة' : 'Status'}</th>
+                <th className="text-start px-4 py-3 text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">{t.priority}</th>
+                <th className="text-start px-4 py-3 text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">{language === 'ar' ? 'تاريخ الأرشفة' : 'Archived At'}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--border-dim)]">

@@ -420,6 +420,14 @@ export const translations = {
     ticketCreatedSuccess: 'Ticket created successfully: {ticketNumber}',
     voiceNote: 'Voice Note',
     record: 'Record',
+    changePassword: 'Change Password',
+    currentPassword: 'Current Password',
+    confirmNewPassword: 'Confirm New Password',
+    passwordRequirementsHint: 'Minimum 12 characters with uppercase, lowercase, and a number.',
+    passwordChangedSuccess: 'Password changed successfully. Please sign in again.',
+    passwordMismatch: 'New password and confirmation do not match.',
+    forcePasswordChangeWarning: 'Security Notice: You are using a temporary password. Please change your password now.',
+    slaHours: 'SLA Hours',
   },
   ar: {
     appName: 'ABCH Ticketing CRM',
@@ -841,6 +849,14 @@ export const translations = {
     ticketCreatedSuccess: 'تم إنشاء التذكرة بنجاح: {ticketNumber}',
     voiceNote: 'تسجيل صوتي',
     record: 'تسجيل',
+    changePassword: 'تغيير كلمة المرور',
+    currentPassword: 'كلمة المرور الحالية',
+    confirmNewPassword: 'تأكيد كلمة المرور الجديدة',
+    passwordRequirementsHint: '12 حرفاً على الأقل تتضمن حرفاً كبيراً وحرفاً صغيراً ورقماً.',
+    passwordChangedSuccess: 'تم تغيير كلمة المرور بنجاح. يرجى تسجيل الدخول مرة أخرى.',
+    passwordMismatch: 'كلمة المرور الجديدة وتأكيدها غير متطابقين.',
+    forcePasswordChangeWarning: 'تنبيه أمني: أنت تستخدم كلمة مرور مؤقتة. يرجى تغيير كلمة المرور الآن.',
+    slaHours: 'ساعات اتفاقية الخدمة (SLA)',
   }
 };
 

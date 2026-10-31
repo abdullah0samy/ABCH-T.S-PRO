@@ -13,12 +13,22 @@ const numericId = z
   .union([z.number().int().positive(), z.string().regex(/^\d+$/)])
   .transform((v) => Number(v));
 
-/** Badge and username are numeric strings in this hospital's directory. */
-const numericString = z
+const identifierString = z
   .string()
-  .regex(/^\d+$/, 'Badge Number and Username must be numeric only')
-  .min(1)
-  .max(32);
+  .trim()
+  .min(1, 'Identifier is required')
+  .max(64)
+  .regex(/^[a-zA-Z0-9_.-]+$/, 'Only letters, numbers, dots, hyphens, and underscores are allowed');
+
+const optionalEmail = z.preprocess(
+  (v) => (typeof v === 'string' && v.trim() === '' ? null : v),
+  z.string().email('Invalid email').max(160).nullable().optional(),
+);
+
+const optionalFullNameEn = z.preprocess(
+  (v) => (typeof v === 'string' && v.trim() === '' ? null : v),
+  z.string().max(120).nullable().optional(),
+);
 
 export const userRoleSchema = z.enum([
   'super_admin',
@@ -27,15 +37,43 @@ export const userRoleSchema = z.enum([
   'end_user',
 ]);
 
-const permissionsOverrideSchema = z.record(z.string(), z.boolean().nullable()).optional();
+const ALLOWED_PERMISSION_KEYS = new Set([
+  'canReceiveTickets',
+  'canSendTickets',
+  'canViewAllDeptTickets',
+  'canAssignTickets',
+  'canChangeStatus',
+  'canTransferTickets',
+  'canArchiveTickets',
+  'canExportData',
+  'canViewAnalytics',
+  'canManageTeamNotes',
+  'canManageDeptUsers',
+  'canViewAuditLogs',
+  'canManageKnowledgeBase',
+]);
+
+const permissionsOverrideSchema = z.preprocess(
+  (v) => {
+    if (!v || typeof v !== 'object' || Array.isArray(v)) return undefined;
+    const cleaned: Record<string, boolean | null> = {};
+    for (const [k, val] of Object.entries(v as Record<string, unknown>)) {
+      if (ALLOWED_PERMISSION_KEYS.has(k) && (typeof val === 'boolean' || val === null)) {
+        cleaned[k] = val;
+      }
+    }
+    return cleaned;
+  },
+  z.record(z.string(), z.boolean().nullable().optional()).optional(),
+);
 
 export const createUserSchema = z.object({
-  badgeNumber: numericString,
-  username: numericString,
+  badgeNumber: identifierString,
+  username: identifierString,
   password: passwordSchema,
-  fullNameAr: z.string().min(1, 'Arabic name is required').max(120),
-  fullNameEn: z.string().max(120).optional().nullable(),
-  email: z.string().email('Invalid email').max(160).optional().nullable(),
+  fullNameAr: z.string().trim().min(1, 'Arabic name is required').max(120),
+  fullNameEn: optionalFullNameEn,
+  email: optionalEmail,
   role: userRoleSchema,
   departmentId: numericId.optional().nullable(),
   isActive: z.boolean().optional(),
@@ -43,11 +81,11 @@ export const createUserSchema = z.object({
 });
 
 export const updateUserSchema = z.object({
-  badgeNumber: numericString.optional(),
-  username: numericString.optional(),
-  email: z.string().email('Invalid email').max(160).optional().nullable(),
-  fullNameAr: z.string().min(1).max(120).optional(),
-  fullNameEn: z.string().max(120).optional().nullable(),
+  badgeNumber: identifierString.optional(),
+  username: identifierString.optional(),
+  email: optionalEmail,
+  fullNameAr: z.string().trim().min(1).max(120).optional(),
+  fullNameEn: optionalFullNameEn,
   role: userRoleSchema.optional(),
   departmentId: numericId.optional().nullable(),
   isActive: z.boolean().optional(),

@@ -131,10 +131,14 @@ export class AuthService {
         id: user.id,
         badgeNumber: user.badgeNumber,
         username: user.username,
+        email: user.email,
         fullNameAr: user.fullNameAr,
         fullNameEn: user.fullNameEn,
         role: user.role,
+        departmentId: user.departmentId,
         department: user.department,
+        avatarUrl: user.avatarUrl,
+        forcePasswordChange: user.forcePasswordChange,
       },
     };
   }

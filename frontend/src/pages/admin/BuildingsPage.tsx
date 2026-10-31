@@ -6,6 +6,7 @@ import { useSettingsStore } from '../../store/settingsStore.ts';
 import { translations } from '../../core/translations.ts';
 import { apiFetch } from '../../core/api.ts';
 import { useAdminList, useAdminMutation } from '../../core/hooks/useAdmin.ts';
+import { useNotifications } from '../../core/NotificationProvider.tsx';
 import { Building2, Plus, Edit2, Trash2, Check, X } from 'lucide-react';
 import { motion } from 'motion/react';
 
@@ -25,6 +26,7 @@ export default function BuildingsPage() {
   const { accessToken } = useAuthStore();
   const { language } = useSettingsStore();
   const t = translations[language];
+  const { addNotification } = useNotifications();
 
   const { data: buildings = [], isLoading: loading, error: queryError, refetch } = useAdminList<Building>(
     '/api/admin/buildings',
@@ -45,7 +47,7 @@ export default function BuildingsPage() {
       setEditingBuilding(null);
       setFormData({ nameAr: '', nameEn: '', isActive: true });
     } catch (error: any) {
-      alert(error?.message || 'Something went wrong');
+      addNotification({ title: t.error, message: error?.message || 'Something went wrong', type: 'error' });
       console.error('Error saving building:', error);
     }
   };
@@ -58,7 +60,7 @@ export default function BuildingsPage() {
       });
       refetch();
     } catch (error: any) {
-      alert(error?.message || 'Something went wrong');
+      addNotification({ title: t.error, message: error?.message || 'Something went wrong', type: 'error' });
       console.error('Error deleting building:', error);
     }
   };

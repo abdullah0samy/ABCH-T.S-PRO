@@ -18,6 +18,7 @@ import { useSettingsStore } from '../../store/settingsStore.ts';
 import { translations } from '../../core/translations.ts';
 import { apiFetch } from '../../core/api.ts';
 import { useAdminList, useAdminMutation } from '../../core/hooks/useAdmin.ts';
+import { useNotifications } from '../../core/NotificationProvider.tsx';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface User {
@@ -28,25 +29,25 @@ interface User {
   fullNameAr: string;
   fullNameEn: string | null;
   role: string;
-  roleId: number | null;
   isActive: boolean;
   departmentId: number | null;
   department?: { nameEn: string; nameAr: string };
   userRole?: { name: string };
   permissionsOverride?: {
-    canArchiveTickets: boolean | null;
-    canExportData: boolean | null;
-    canViewAnalytics: boolean | null;
-    canManageTeamNotes: boolean | null;
-    canManageDeptUsers: boolean | null;
-    canViewAuditLogs: boolean | null;
-    canManageKnowledgeBase: boolean | null;
+    canReceiveTickets?: boolean | null;
+    canSendTickets?: boolean | null;
+    canViewAllDeptTickets?: boolean | null;
+    canAssignTickets?: boolean | null;
+    canChangeStatus?: boolean | null;
+    canTransferTickets?: boolean | null;
+    canArchiveTickets?: boolean | null;
+    canExportData?: boolean | null;
+    canViewAnalytics?: boolean | null;
+    canManageTeamNotes?: boolean | null;
+    canManageDeptUsers?: boolean | null;
+    canViewAuditLogs?: boolean | null;
+    canManageKnowledgeBase?: boolean | null;
   };
-}
-
-interface Role {
-  id: number;
-  name: string;
 }
 
 interface Department {
@@ -59,6 +60,7 @@ export const UserManagementPage: React.FC = () => {
   const { accessToken } = useAuthStore();
   const { language } = useSettingsStore();
   const t = translations[language];
+  const { addNotification } = useNotifications();
 
   const { data: users = [], isLoading: loadingUsers, error: usersError, refetch } = useAdminList<User>(
     '/api/admin/users',
@@ -87,6 +89,12 @@ export const UserManagementPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   const permissionKeys = [
+    { key: 'canReceiveTickets', labelAr: 'استقبال التذاكر', labelEn: 'Receive Tickets' },
+    { key: 'canSendTickets', labelAr: 'إرسال التذاكر', labelEn: 'Send Tickets' },
+    { key: 'canViewAllDeptTickets', labelAr: 'عرض جميع تذاكر القسم', labelEn: 'View All Dept Tickets' },
+    { key: 'canAssignTickets', labelAr: 'تعيين التذاكر', labelEn: 'Assign Tickets' },
+    { key: 'canChangeStatus', labelAr: 'تغيير حالة التذكرة', labelEn: 'Change Status' },
+    { key: 'canTransferTickets', labelAr: 'تحويل التذاكر', labelEn: 'Transfer Tickets' },
     { key: 'canArchiveTickets', labelAr: 'أرشفة التذاكر', labelEn: 'Archive Tickets' },
     { key: 'canExportData', labelAr: 'تصدير البيانات', labelEn: 'Export Data' },
     { key: 'canViewAnalytics', labelAr: 'عرض التحليلات', labelEn: 'View Analytics' },
@@ -102,10 +110,24 @@ export const UserManagementPage: React.FC = () => {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      await saveUser({ id: currentUser?.id, data: currentUser });
+      const payload: Record<string, any> = {
+        badgeNumber: currentUser?.badgeNumber?.trim(),
+        username: currentUser?.username?.trim(),
+        fullNameAr: currentUser?.fullNameAr?.trim(),
+        fullNameEn: currentUser?.fullNameEn?.trim() || null,
+        email: currentUser?.email?.trim() || null,
+        role: currentUser?.role || 'end_user',
+        departmentId: currentUser?.departmentId ?? null,
+        isActive: currentUser?.isActive ?? true,
+        permissionsOverride: currentUser?.permissionsOverride,
+      };
+      if (!currentUser?.id && (currentUser as any)?.password) {
+        payload.password = (currentUser as any).password;
+      }
+      await saveUser({ id: currentUser?.id, data: payload });
       setShowModal(false);
     } catch (error: any) {
-      alert(error?.message || 'Something went wrong');
+      addNotification({ title: t.error, message: error?.message || 'Something went wrong', type: 'error' });
       console.error('Error saving user:', error);
     } finally {
       setIsSubmitting(false);
@@ -125,8 +147,8 @@ export const UserManagementPage: React.FC = () => {
 
       setShowResetModal(false);
       setNewPassword('');
-      alert('Password reset successfully');
-    } catch (error) {
+      addNotification({ title: t.success, message: t.passwordChangedSuccess, type: 'success' });
+    } catch (error: any) {
       setError(error?.message || 'Something went wrong');
       console.error('Error resetting password:', error);
     } finally {
@@ -144,7 +166,7 @@ export const UserManagementPage: React.FC = () => {
       });
       refetch();
     } catch (error: any) {
-      alert(error?.message || 'Something went wrong');
+      addNotification({ title: t.error, message: error?.message || 'Something went wrong', type: 'error' });
       console.error('Error toggling status:', error);
     }
   };
@@ -184,11 +206,11 @@ export const UserManagementPage: React.FC = () => {
       <div className="bg-[var(--bg-surface)] rounded-2xl border border-[var(--border-main)] overflow-hidden shadow-sm">
         <div className="p-4 border-b border-[var(--border-dim)] flex items-center gap-4">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" size={18} />
+            <Search className="absolute start-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" size={18} />
             <input 
               type="text"
               placeholder={t.searchByNameOrId}
-              className="w-full pl-10 pr-4 py-2 bg-[var(--border-dim)] border-none rounded-xl focus:ring-2 focus:ring-primary-blue text-sm"
+              className="w-full ps-10 pe-4 py-2 bg-[var(--border-dim)] border-none rounded-xl focus:ring-2 focus:ring-primary-blue text-sm"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -199,7 +221,7 @@ export const UserManagementPage: React.FC = () => {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-start border-collapse">
             <thead>
               <tr className="bg-[var(--border-dim)]/50 text-[var(--text-secondary)] text-xs uppercase tracking-wider">
                 <th className="px-6 py-4 font-semibold">{t.userLabel}</th>
@@ -207,7 +229,7 @@ export const UserManagementPage: React.FC = () => {
                 <th className="px-6 py-4 font-semibold">{t.role}</th>
                 <th className="px-6 py-4 font-semibold">{t.department}</th>
                 <th className="px-6 py-4 font-semibold">{t.status}</th>
-                <th className="px-6 py-4 font-semibold text-right">{t.actions}</th>
+                <th className="px-6 py-4 font-semibold text-end">{t.actions}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--border-dim)]">
@@ -274,7 +296,7 @@ export const UserManagementPage: React.FC = () => {
                         {user.isActive ? t.active : t.disabled}
                       </button>
                     </td>
-                    <td className="px-6 py-4 text-right">
+                    <td className="px-6 py-4 text-end">
                       <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button 
                           onClick={() => {
@@ -298,12 +320,12 @@ export const UserManagementPage: React.FC = () => {
                         </button>
                         <button 
                           onClick={async () => {
-                            if (!confirm('Are you sure you want to delete this user?')) return;
+                            if (!confirm(t.deleteConfirm)) return;
                             try {
                               await apiFetch(`/api/admin/users/${user.id}`, { method: 'DELETE' });
                               refetch();
                             } catch (e: any) {
-                              alert(e?.message || 'Something went wrong');
+                              addNotification({ title: t.error, message: e?.message || 'Something went wrong', type: 'error' });
                             }
                           }}
                           className="p-2 text-[var(--text-muted)] hover:text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-900/20 rounded-lg transition-all"
@@ -390,21 +412,15 @@ export const UserManagementPage: React.FC = () => {
                       )}
                       <div className="space-y-1.5">
                         <label className="text-xs font-bold text-[var(--text-secondary)] uppercase tracking-wider">{t.role}</label>
-                        <select className="w-full px-4 py-2.5 bg-[var(--border-dim)] border-none rounded-xl focus:ring-2 focus:ring-primary-blue" value={currentUser?.roleId || currentUser?.role || ''} onChange={e => {
-                          const val = e.target.value;
-                          if (!isNaN(parseInt(val))) {
-                            setCurrentUser({...currentUser, roleId: parseInt(val), role: roles.find(r => r.id === parseInt(val))?.name.toLowerCase().replace(' ', '_') || 'end_user'});
-                          } else {
-                            setCurrentUser({...currentUser, role: val, roleId: null});
-                          }
-                        }}>
-                          <optgroup label="System Roles">
-                            <option value="end_user">End User</option>
-                            <option value="agent">Agent</option>
-                            <option value="supervisor">Supervisor</option>
-                            <option value="super_admin">Super Admin</option>
-                          </optgroup>
-                          {roles.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
+                        <select
+                          className="w-full px-4 py-2.5 bg-[var(--border-dim)] border-none rounded-xl focus:ring-2 focus:ring-primary-blue"
+                          value={currentUser?.role || 'end_user'}
+                          onChange={e => setCurrentUser({ ...currentUser, role: e.target.value })}
+                        >
+                          <option value="end_user">{language === 'ar' ? 'مستخدم نهائي (End User)' : 'End User'}</option>
+                          <option value="agent">{language === 'ar' ? 'موظف دعم (Agent)' : 'Agent'}</option>
+                          <option value="supervisor">{language === 'ar' ? 'مشرف قسم (Supervisor)' : 'Supervisor'}</option>
+                          <option value="super_admin">{language === 'ar' ? 'مدير النظام (Super Admin)' : 'Super Admin'}</option>
                         </select>
                       </div>
                       <div className="space-y-1.5">

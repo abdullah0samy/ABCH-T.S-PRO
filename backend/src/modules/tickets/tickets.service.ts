@@ -405,6 +405,11 @@ export class TicketsService {
       }
     }
 
+    const canSeeInternalNotes = isAdmin || (isDeptMember && (userRole === 'supervisor' || userRole === 'agent'));
+    if (!canSeeInternalNotes && Array.isArray(ticket.messages)) {
+      ticket.messages = ticket.messages.filter((m) => m.messageType !== 'internal_note');
+    }
+
     return ticket;
   }
 
@@ -497,6 +502,20 @@ export class TicketsService {
     this.ticketGateway.emitToDept(ticket.departmentId, 'ticket-status-updated', { id: ticket.id, ticketNumber: ticket.ticketNumber, status });
     this.ticketGateway.emitToTicket(ticket.id, 'ticket-status-updated', { id: ticket.id, status });
 
+    if (Number(ticket.createdById) !== Number(userId)) {
+      await this.prisma.notification.create({
+        data: {
+          userId: ticket.createdById,
+          ticketId: ticket.id,
+          eventType: 'STATUS_CHANGED',
+          titleAr: 'تحديث حالة التذكرة',
+          titleEn: 'Ticket Status Updated',
+          bodyAr: `تم تغيير حالة التذكرة ${ticket.ticketNumber} إلى ${status}`,
+          bodyEn: `Ticket ${ticket.ticketNumber} status is now ${status}`,
+        },
+      }).catch(() => {});
+    }
+
     return updatedTicket;
   }
 
@@ -551,6 +570,19 @@ export class TicketsService {
 
     if (agentId) {
       this.ticketGateway.emitToUser(parseInt(agentId), 'ticket-assigned', { id: ticket.id, ticketNumber: ticket.ticketNumber, subject: ticket.subject });
+      if (parseInt(agentId) !== Number(userId)) {
+        await this.prisma.notification.create({
+          data: {
+            userId: parseInt(agentId),
+            ticketId: ticket.id,
+            eventType: 'TICKET_ASSIGNED',
+            titleAr: 'تم تعيين تذكرة لك',
+            titleEn: 'Ticket Assigned to You',
+            bodyAr: `${ticket.ticketNumber}: ${ticket.subject || ''}`,
+            bodyEn: `${ticket.ticketNumber}: ${ticket.subject || ''}`,
+          },
+        }).catch(() => {});
+      }
     }
     this.ticketGateway.emitToTicket(ticket.id, 'ticket-assigned', { id: ticket.id });
 
@@ -640,10 +672,12 @@ export class TicketsService {
       throw new ForbiddenException({ message: 'Resolved tickets can only be commented on by the assigned team or the ticket creator.' });
     }
 
+    const effectiveInternal = (userRole === 'super_admin' || userRole === 'supervisor' || userRole === 'agent') ? Boolean(isInternal) : false;
+
     const message = await this.prisma.ticketMessage.create({
       data: {
         ticketId, senderId: userId, body: content,
-        messageType: isInternal ? 'internal_note' : 'public',
+        messageType: effectiveInternal ? 'internal_note' : 'public',
         attachments: attachments ? {
           create: attachments.map((a: any) => ({
             uploadedById: userId, fileName: a.fileName, fileUrl: a.fileUrl,
@@ -665,8 +699,36 @@ export class TicketsService {
 
     const eventData = { ticketId: ticket.id, ticketNumber: ticket.ticketNumber, message: { id: message.id, body: message.body, sender: message.sender, createdAt: message.createdAt, messageType: message.messageType } };
     this.ticketGateway.emitToDept(ticket.departmentId, 'new-comment', eventData);
-    if (ticket.createdById !== userId) this.ticketGateway.emitToUser(ticket.createdById, 'new-comment', eventData);
-    if (ticket.assignedToId && ticket.assignedToId !== userId) this.ticketGateway.emitToUser(ticket.assignedToId, 'new-comment', eventData);
+    if (!effectiveInternal && ticket.createdById !== userId) {
+      this.ticketGateway.emitToUser(ticket.createdById, 'new-comment', eventData);
+      await this.prisma.notification.create({
+        data: {
+          userId: ticket.createdById,
+          ticketId: ticket.id,
+          eventType: 'NEW_COMMENT',
+          titleAr: 'تعليق جديد',
+          titleEn: 'New Comment',
+          bodyAr: `${ticket.ticketNumber}: ${(content || '').substring(0, 80)}`,
+          bodyEn: `${ticket.ticketNumber}: ${(content || '').substring(0, 80)}`,
+        },
+      }).catch(() => {});
+    }
+    if (ticket.assignedToId && ticket.assignedToId !== userId) {
+      this.ticketGateway.emitToUser(ticket.assignedToId, 'new-comment', eventData);
+      if (!effectiveInternal && ticket.assignedToId !== ticket.createdById) {
+        await this.prisma.notification.create({
+          data: {
+            userId: ticket.assignedToId,
+            ticketId: ticket.id,
+            eventType: 'NEW_COMMENT',
+            titleAr: 'تعليق جديد',
+            titleEn: 'New Comment',
+            bodyAr: `${ticket.ticketNumber}: ${(content || '').substring(0, 80)}`,
+            bodyEn: `${ticket.ticketNumber}: ${(content || '').substring(0, 80)}`,
+          },
+        }).catch(() => {});
+      }
+    }
 
     return message;
   }

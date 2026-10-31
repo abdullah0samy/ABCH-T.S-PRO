@@ -227,7 +227,7 @@ export default function TeamFeedPage() {
       setNewNoteBody('');
       setAttachments([]);
     } catch (err: any) {
-      alert(err?.message || 'Something went wrong');
+      addNotification({ title: t.error, message: err?.message || 'Something went wrong', type: 'error' });
     }
   };
 
@@ -235,7 +235,7 @@ export default function TeamFeedPage() {
     try {
       await likeNote(noteId);
     } catch (err: any) {
-      alert(err?.message || 'Something went wrong');
+      addNotification({ title: t.error, message: err?.message || 'Something went wrong', type: 'error' });
     }
   };
 
@@ -246,7 +246,7 @@ export default function TeamFeedPage() {
       setNewComment('');
       setCommentingOn(null);
     } catch (err: any) {
-      alert(err?.message || 'Something went wrong');
+      addNotification({ title: t.error, message: err?.message || 'Something went wrong', type: 'error' });
     }
   };
 

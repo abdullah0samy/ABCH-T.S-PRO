@@ -2,11 +2,12 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useAuthStore } from '../../store/authStore.ts';
 import { useSettingsStore } from '../../store/settingsStore.ts';
 import { translations } from '../../core/translations.ts';
-import { apiFetch, apiUrl } from '../../core/api.ts';
+import { apiFetch } from '../../core/api.ts';
 import ErrorBanner from '../../components/ErrorBanner.tsx';
 import { useTicketList } from '../../core/hooks/useTickets.ts';
 import { useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '../../core/queryKeys.ts';
+import { useNotifications } from '../../core/NotificationProvider.tsx';
 import { 
   Inbox, 
   Search, 
@@ -64,6 +65,7 @@ export default function InboxPage() {
   const { accessToken, user } = useAuthStore();
   const { language } = useSettingsStore();
   const t = translations[language];
+  const { addNotification } = useNotifications();
 
   useEffect(() => {
     let isMounted = true;
@@ -135,6 +137,7 @@ export default function InboxPage() {
       setSelectedTickets([]);
       queryClient.invalidateQueries({ queryKey: queryKeys.tickets.lists() });
     } catch (error: any) {
+      addNotification({ title: t.error, message: error?.message || 'Error in bulk status update', type: 'error' });
       console.error('Error in bulk status update:', error);
     } finally {
       setBulkActionLoading(false);
@@ -145,19 +148,17 @@ export default function InboxPage() {
     if (!agentId || selectedTickets.length === 0) return;
     setBulkActionLoading(true);
     try {
-      const res = await fetch(apiUrl('/api/tickets/bulk-assign'), {
+      await apiFetch('/api/tickets/bulk-assign', {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${accessToken}` 
-        },
-        body: JSON.stringify({ ticketIds: selectedTickets, agentId: agentId === 'unassign' ? null : agentId })
+        body: JSON.stringify({
+          ticketIds: selectedTickets,
+          agentId: agentId === 'unassign' ? null : Number(agentId),
+        }),
       });
-      if (res.ok) {
-        setSelectedTickets([]);
-        queryClient.invalidateQueries({ queryKey: queryKeys.tickets.lists() });
-      }
+      setSelectedTickets([]);
+      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.lists() });
     } catch (error: any) {
+      addNotification({ title: t.error, message: error?.message || 'Error in bulk assignment', type: 'error' });
       console.error('Error in bulk assignment:', error);
     } finally {
       setBulkActionLoading(false);
@@ -167,22 +168,17 @@ export default function InboxPage() {
   const handleBulkArchive = async () => {
     if (selectedTickets.length === 0) return;
     if (!confirm(t.confirmBulkArchive)) return;
-    
+
     setBulkActionLoading(true);
     try {
-      const res = await fetch(apiUrl('/api/tickets/bulk-archive'), {
+      await apiFetch('/api/tickets/bulk-archive', {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${accessToken}` 
-        },
-        body: JSON.stringify({ ticketIds: selectedTickets })
+        body: JSON.stringify({ ticketIds: selectedTickets }),
       });
-      if (res.ok) {
-        setSelectedTickets([]);
-        queryClient.invalidateQueries({ queryKey: queryKeys.tickets.lists() });
-      }
+      setSelectedTickets([]);
+      queryClient.invalidateQueries({ queryKey: queryKeys.tickets.lists() });
     } catch (error: any) {
+      addNotification({ title: t.error, message: error?.message || 'Error in bulk archive', type: 'error' });
       console.error('Error in bulk archive:', error);
     } finally {
       setBulkActionLoading(false);
@@ -267,13 +263,13 @@ export default function InboxPage() {
 
         <div className="flex flex-wrap items-center gap-3">
           <form onSubmit={handleSearch} className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" size={18} />
+            <Search className="absolute start-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" size={18} />
             <input
               type="text"
               placeholder={t.search}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="input-surface pl-10 pr-4 py-2 w-64 bg-[var(--bg-surface)]/50"
+              className="input-surface ps-10 pe-4 py-2 w-64 bg-[var(--bg-surface)]/50"
             />
           </form>
 
@@ -370,7 +366,7 @@ export default function InboxPage() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 10 }}
-                    className="absolute right-0 mt-2 w-48 bg-[var(--bg-surface)] border border-[var(--border-main)] rounded-2xl shadow-xl z-50 p-4 space-y-2"
+                    className="absolute end-0 mt-2 w-48 bg-[var(--bg-surface)] border border-[var(--border-main)] rounded-2xl shadow-xl z-50 p-4 space-y-2"
                   >
                     {columns.map(col => (
                       <label key={col.id} className="flex items-center gap-3 cursor-pointer group">
@@ -455,7 +451,7 @@ export default function InboxPage() {
 
         <div className="overflow-x-auto">
           {viewMode === 'table' ? (
-            <table className="w-full text-left border-collapse">
+            <table className="w-full text-start border-collapse">
               <thead>
                 <tr className="bg-[var(--border-dim)]/30 border-b border-[var(--border-dim)]">
                   <th className="px-6 py-4 w-10">
@@ -643,8 +639,8 @@ export default function InboxPage() {
                         )}
                       </td>
                     )}
-                    <td className="px-6 py-4 text-right">
-                      <ChevronRight className="text-[var(--text-muted)] group-hover:text-primary-blue transition-all" size={20} />
+                    <td className="px-6 py-4 text-end">
+                      <ChevronRight className="text-[var(--text-muted)] group-hover:text-primary-blue transition-all rtl:rotate-180" size={20} />
                     </td>
                   </tr>
                 ))}

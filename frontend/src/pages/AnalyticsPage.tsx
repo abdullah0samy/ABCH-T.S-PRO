@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import ErrorBanner from '../components/ErrorBanner.tsx';
-import { apiFetch } from '../core/api.ts';
+import { apiFetch, apiDownload } from '../core/api.ts';
+import { useNotifications } from '../core/NotificationProvider.tsx';
 import { 
   BarChart3, 
   TrendingUp, 
@@ -55,6 +56,8 @@ interface AgentPerformance {
 export const AnalyticsPage: React.FC = () => {
   const { language } = useSettingsStore();
   const t = translations[language];
+  const { addNotification } = useNotifications();
+  const [showAllAgents, setShowAllAgents] = useState(false);
   const { data, isLoading: loading, error: queryError, refetch } = useQuery({
     queryKey: ['analytics', 'dashboard-summary'],
     queryFn: () => apiFetch('/api/analytics/dashboard-summary')
@@ -90,15 +93,17 @@ export const AnalyticsPage: React.FC = () => {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <button className="flex items-center gap-2 px-4 py-2 bg-[var(--bg-surface)] border border-[var(--border-main)] rounded-xl text-sm font-medium hover:bg-[var(--bg-main)] transition-colors">
+          <button
+            onClick={() => refetch()}
+            className="flex items-center gap-2 px-4 py-2 bg-[var(--bg-surface)] border border-[var(--border-main)] rounded-xl text-sm font-medium hover:bg-[var(--bg-main)] transition-colors"
+          >
             <Calendar size={18} />
             {language === 'ar' ? 'آخر 30 يوم' : 'Last 30 Days'}
           </button>
           <button 
             onClick={async () => {
               try {
-                const response = await apiFetch('/api/analytics/export');
-                const blob = await response.blob();
+                const blob = await apiDownload('/api/analytics/export');
                 const url = window.URL.createObjectURL(blob);
                 const a = document.createElement('a');
                 a.href = url;
@@ -107,8 +112,8 @@ export const AnalyticsPage: React.FC = () => {
                 a.click();
                 a.remove();
                 window.URL.revokeObjectURL(url);
-              } catch (error) {
-                alert(error?.message || 'Something went wrong');
+              } catch (error: any) {
+                addNotification({ title: t.error, message: error?.message || 'Something went wrong', type: 'error' });
                 console.error('Export error:', error);
               }
             }}
@@ -246,12 +251,17 @@ export const AnalyticsPage: React.FC = () => {
               <Award className="text-amber-500" />
               {t.agentPerformance}
             </h3>
-            <button className="text-sm text-primary-blue font-bold hover:underline">
-              {t.viewAll}
-            </button>
+            {agentPerformance.length > 5 && (
+              <button
+                onClick={() => setShowAllAgents(prev => !prev)}
+                className="text-sm text-primary-blue font-bold hover:underline"
+              >
+                {showAllAgents ? (language === 'ar' ? 'عرض أقل' : 'Show Less') : t.viewAll}
+              </button>
+            )}
           </div>
           <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
+            <table className="w-full text-start border-collapse">
               <thead>
                 <tr className="bg-[var(--border-dim)]/50 text-[var(--text-secondary)] text-[10px] uppercase tracking-wider">
                   <th className="px-8 py-4 font-bold">{t.agent}</th>
@@ -262,7 +272,7 @@ export const AnalyticsPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-[var(--border-dim)]">
-                {agentPerformance.slice(0, 5).map((agent) => (
+                {(showAllAgents ? agentPerformance : agentPerformance.slice(0, 5)).map((agent: AgentPerformance) => (
                   <tr key={agent.id} className="hover:bg-[var(--border-dim)]/50 transition-colors">
                     <td className="px-8 py-4">
                       <div className="flex items-center gap-3">

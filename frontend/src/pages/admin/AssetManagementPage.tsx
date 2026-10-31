@@ -6,6 +6,7 @@ import { useSettingsStore } from '../../store/settingsStore.ts';
 import { translations } from '../../core/translations.ts';
 import { apiFetch } from '../../core/api.ts';
 import { useAdminList, useAdminMutation } from '../../core/hooks/useAdmin.ts';
+import { useNotifications } from '../../core/NotificationProvider.tsx';
 import { 
   Plus, 
   Search, 
@@ -45,6 +46,7 @@ export default function AssetManagementPage() {
   const { accessToken } = useAuthStore();
   const { language } = useSettingsStore();
   const t = translations[language];
+  const { addNotification } = useNotifications();
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingAsset, setEditingAsset] = useState<Asset | null>(null);
@@ -102,7 +104,7 @@ export default function AssetManagementPage() {
         warrantyExpiry: ''
       });
     } catch (error: any) {
-      alert(error?.message || 'Something went wrong');
+      addNotification({ title: t.error, message: error?.message || 'Something went wrong', type: 'error' });
       console.error('Error saving asset:', error);
     }
   };
@@ -115,7 +117,7 @@ export default function AssetManagementPage() {
       });
       refetch();
     } catch (error: any) {
-      alert(error?.message || 'Something went wrong');
+      addNotification({ title: t.error, message: error?.message || 'Something went wrong', type: 'error' });
       console.error('Error deleting asset:', error);
     }
   };
@@ -178,13 +180,13 @@ export default function AssetManagementPage() {
       {/* Toolbar */}
       <div className="bg-[var(--bg-surface)] p-4 rounded-2xl border border-[var(--border-main)] flex flex-col md:flex-row gap-4">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" size={18} />
+          <Search className="absolute start-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" size={18} />
           <input 
             type="text"
             placeholder={t.searchAssets}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 rounded-xl border border-[var(--border-main)] bg-[var(--bg-main)] text-sm outline-none focus:ring-2 focus:ring-primary-blue"
+            className="w-full ps-10 pe-4 py-2 rounded-xl border border-[var(--border-main)] bg-[var(--bg-main)] text-sm outline-none focus:ring-2 focus:ring-primary-blue"
           />
         </div>
         <div className="flex items-center gap-2">
@@ -200,7 +202,7 @@ export default function AssetManagementPage() {
       {/* Assets Table */}
       <div className="bg-[var(--bg-surface)] rounded-2xl border border-[var(--border-main)] overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-start border-collapse">
             <thead>
               <tr className="bg-[var(--border-dim)]/50 border-b border-[var(--border-dim)]">
                 <th className="px-6 py-4 text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">{t.asset}</th>
@@ -249,7 +251,7 @@ export default function AssetManagementPage() {
                       {asset.status}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-right">
+                  <td className="px-6 py-4 text-end">
                     <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-all">
                       <button 
                         onClick={() => {

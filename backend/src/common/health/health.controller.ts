@@ -1,4 +1,4 @@
-import { Controller, Get, Inject } from '@nestjs/common';
+import { Controller, Get, Inject, ServiceUnavailableException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 
 @Controller('api')
@@ -26,11 +26,11 @@ export class HealthController {
         responseTime: `${Date.now() - start}ms`,
       };
     } catch {
-      return {
+      throw new ServiceUnavailableException({
         status: 'error',
         message: 'Database connection failed',
         timestamp: new Date().toISOString(),
-      };
+      });
     }
   }
 }

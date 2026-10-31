@@ -5,6 +5,7 @@ import { useAuthStore } from '../store/authStore.ts';
 import { useSettingsStore } from '../store/settingsStore.ts';
 import { translations } from '../core/translations.ts';
 import { apiFetch } from '../core/api.ts';
+import { useNotifications } from '../core/NotificationProvider.tsx';
 import { 
   Search, 
   BookOpen, 
@@ -54,6 +55,8 @@ export default function KnowledgeBasePage() {
   const { accessToken, user } = useAuthStore();
   const { language } = useSettingsStore();
   const t = translations[language];
+  const { addNotification } = useNotifications();
+  const [helpfulArticles, setHelpfulArticles] = useState<Record<number, boolean>>({});
 
   const hasKbPermission = useMemo(() => {
     if (!user) return false;
@@ -68,7 +71,7 @@ export default function KnowledgeBasePage() {
   const queryClient = useQueryClient();
 
   const [page, setPage] = useState(1);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState(() => new URLSearchParams(window.location.search).get('search') || '');
   const [categorySearchTerm, setCategorySearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   
@@ -161,7 +164,7 @@ export default function KnowledgeBasePage() {
       setShowArticleForm(false);
       setArticleForm({ titleAr: '', titleEn: '', contentAr: '', contentEn: '', categoryId: '' });
     } catch (error: any) {
-      alert(error?.message || 'Something went wrong');
+      addNotification({ title: t.error, message: error?.message || 'Something went wrong', type: 'error' });
     }
   };
 
@@ -173,7 +176,7 @@ export default function KnowledgeBasePage() {
       setEditingArticle(null);
       setShowArticleForm(false);
     } catch (error: any) {
-      alert(error?.message || 'Something went wrong');
+      addNotification({ title: t.error, message: error?.message || 'Something went wrong', type: 'error' });
     }
   };
 
@@ -182,7 +185,7 @@ export default function KnowledgeBasePage() {
     try {
       await deleteArticle(id);
     } catch (error: any) {
-      alert(error?.message || 'Something went wrong');
+      addNotification({ title: t.error, message: error?.message || 'Something went wrong', type: 'error' });
     }
   };
 
@@ -212,7 +215,7 @@ export default function KnowledgeBasePage() {
       setEditingCategory(null);
       setCategoryForm({ nameAr: '', nameEn: '' });
     } catch (error: any) {
-      alert(error?.message || 'Something went wrong');
+      addNotification({ title: t.error, message: error?.message || 'Something went wrong', type: 'error' });
     }
   };
 
@@ -221,7 +224,7 @@ export default function KnowledgeBasePage() {
     try {
       await deleteCat(id);
     } catch (error: any) {
-      alert('Failed to delete. Ensure category is empty.');
+      addNotification({ title: t.error, message: error?.message || 'Failed to delete. Ensure category is empty.', type: 'error' });
     }
   };
 
@@ -333,15 +336,43 @@ export default function KnowledgeBasePage() {
 
                 <div className="flex items-center justify-between pt-8 border-t border-[var(--border-dim)]">
                   <div className="flex items-center gap-4">
-                    <button className="flex items-center gap-2 px-4 py-2 premium-card shadow-sm text-[var(--text-secondary)] hover:text-primary-blue transition-all">
+                    <button
+                      onClick={() => {
+                        const next = !helpfulArticles[selectedArticle.id];
+                        setHelpfulArticles(prev => ({ ...prev, [selectedArticle.id]: next }));
+                        if (next) {
+                          addNotification({
+                            title: t.helpful,
+                            message: language === 'ar' ? 'شكراً لملاحظاتك!' : 'Thank you for your feedback!',
+                            type: 'success',
+                          });
+                        }
+                      }}
+                      className={`flex items-center gap-2 px-4 py-2 premium-card shadow-sm transition-all ${
+                        helpfulArticles[selectedArticle.id]
+                          ? 'text-primary-blue border-primary-blue'
+                          : 'text-[var(--text-secondary)] hover:text-primary-blue'
+                      }`}
+                    >
                       <ThumbsUp size={18} />
                       <span className="text-sm font-bold">{t.helpful}</span>
                     </button>
-                    <button className="flex items-center gap-2 px-4 py-2 premium-card shadow-sm text-[var(--text-secondary)] hover:text-primary-blue transition-all">
+                    <button
+                      onClick={async () => {
+                        try {
+                          await navigator.clipboard.writeText(window.location.href);
+                          addNotification({ title: t.linkCopiedTitle, message: t.linkCopied, type: 'success' });
+                        } catch {}
+                      }}
+                      className="flex items-center gap-2 px-4 py-2 premium-card shadow-sm text-[var(--text-secondary)] hover:text-primary-blue transition-all"
+                    >
                       <Share2 size={18} />
                     </button>
                   </div>
-                  <button className="flex items-center gap-2 text-primary-blue font-bold hover:underline">
+                  <button
+                    onClick={() => window.dispatchEvent(new CustomEvent('navigate', { detail: '/tickets/new' }))}
+                    className="flex items-center gap-2 text-primary-blue font-bold hover:underline"
+                  >
                     <MessageSquare size={18} />
                     {t.askQuestion}
                   </button>
@@ -362,13 +393,13 @@ export default function KnowledgeBasePage() {
                 {t.kbHelpTitle}
               </h1>
               <div className="max-w-2xl mx-auto relative group">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)] group-focus-within:text-primary-blue transition-colors" size={24} />
+                <Search className="absolute start-4 top-1/2 -translate-y-1/2 text-[var(--text-muted)] group-focus-within:text-primary-blue transition-colors" size={24} />
                   <input 
                   type="text"
                   placeholder={t.kbSearchPlaceholder}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="input-surface w-full pl-14 pr-6 py-5 text-lg shadow-xl shadow-slate-200/20 dark:shadow-none bg-[var(--bg-surface)] border-[var(--border-main)] text-[var(--text-main)]"
+                  className="input-surface w-full ps-14 pe-6 py-5 text-lg shadow-xl shadow-slate-200/20 dark:shadow-none bg-[var(--bg-surface)] border-[var(--border-main)] text-[var(--text-main)]"
                 />
               </div>
 
@@ -434,7 +465,10 @@ export default function KnowledgeBasePage() {
                   <p className="text-xs text-[var(--text-secondary)] leading-relaxed">
                     {t.supportText}
                   </p>
-                  <button className="w-full py-2 rounded-xl bg-primary-blue text-white text-xs font-bold hover:bg-blue-800 transition-all">
+                  <button
+                    onClick={() => window.dispatchEvent(new CustomEvent('navigate', { detail: '/tickets/new' }))}
+                    className="w-full py-2 rounded-xl bg-primary-blue text-white text-xs font-bold hover:bg-blue-800 transition-all"
+                  >
                     {t.createTicket}
                   </button>
                 </div>

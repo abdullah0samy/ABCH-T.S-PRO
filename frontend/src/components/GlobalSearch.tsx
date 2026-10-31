@@ -85,7 +85,7 @@ export const GlobalSearch: React.FC = () => {
   return (
     <div className="relative w-full max-w-md" ref={containerRef}>
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" size={18} />
+        <Search className="absolute start-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)]" size={18} />
         <input
           type="text"
           placeholder={language === 'ar' ? 'بحث عن تذكرة...' : 'Search tickets...'}
@@ -97,12 +97,12 @@ export const GlobalSearch: React.FC = () => {
           onFocus={() => {
             if (query.length >= 2) setIsOpen(true);
           }}
-          className="input-surface w-full pl-10 pr-10 py-2 text-sm"
+          className="input-surface w-full ps-10 pe-10 py-2 text-sm"
         />
         {query && (
           <button 
             onClick={() => { setQuery(''); setResults([]); }}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
+            className="absolute end-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-secondary)]"
           >
             <X size={16} />
           </button>
@@ -110,7 +110,7 @@ export const GlobalSearch: React.FC = () => {
       </div>
 
       {isOpen && (query.length >= 2) && (
-        <div className="absolute top-12 left-0 w-full bg-[var(--bg-surface)] rounded-2xl border border-[var(--border-main)] shadow-2xl z-50 overflow-hidden">
+        <div className="absolute top-12 start-0 w-full bg-[var(--bg-surface)] rounded-2xl border border-[var(--border-main)] shadow-2xl z-50 overflow-hidden">
           {loading ? (
             <div className="p-4 flex items-center justify-center text-[var(--text-muted)] gap-2">
               <Loader2 className="animate-spin" size={18} />
